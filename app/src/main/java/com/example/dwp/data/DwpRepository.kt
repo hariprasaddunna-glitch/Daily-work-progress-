@@ -356,6 +356,11 @@ class DwpRepository(private val context: Context) {
         taskMap[task.projectId] = projectTasks
         _tasks.value = taskMap
         saveToStorage()
+
+        // Sync to SharePoint in background with null-safe payload
+        scope.launch {
+            syncTaskToSharePoint(task, action = if (index >= 0) "update" else "create")
+        }
     }
 
     fun cancelTask(projectId: String, taskId: String) {
@@ -364,10 +369,16 @@ class DwpRepository(private val context: Context) {
         val index = projectTasks.indexOfFirst { it.id == taskId }
         if (index >= 0) {
             val old = projectTasks[index]
-            projectTasks[index] = old.copy(cancelled = true, status = "cancelled")
+            val updated = old.copy(cancelled = true, status = "cancelled")
+            projectTasks[index] = updated
             taskMap[projectId] = projectTasks
             _tasks.value = taskMap
             saveToStorage()
+
+            // Sync cancellation to SharePoint with null-safe payload
+            scope.launch {
+                syncTaskToSharePoint(updated, action = "cancel")
+            }
         }
     }
 
@@ -377,16 +388,21 @@ class DwpRepository(private val context: Context) {
         val index = projectTasks.indexOfFirst { it.id == taskId }
         if (index >= 0) {
             val old = projectTasks[index]
-            projectTasks[index] = old.copy(cancelled = false, status = "progress")
+            val updated = old.copy(cancelled = false, status = "progress")
+            projectTasks[index] = updated
             taskMap[projectId] = projectTasks
             _tasks.value = taskMap
             saveToStorage()
+
+            scope.launch {
+                syncTaskToSharePoint(updated, action = "reinstate")
+            }
         }
     }
 
-    suspend fun testConnection(): String = withContext(Dispatchers.IO) {
+    suspend fun syncTaskToSharePoint(task: Task, action: String = "update"): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val url = URL(projectsApiUrl)
+            val url = URL(jobsApiUrl)
             val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
             conn.connectTimeout = 8000
@@ -394,23 +410,120 @@ class DwpRepository(private val context: Context) {
             conn.setRequestProperty("Accept", "application/json")
             conn.setRequestProperty("Content-Type", "application/json")
             conn.doOutput = true
+
+            // Crucial: Guarantee NO null values are sent. Power Automate JSON Schema
+            // rejects null for type: 'string' and throws HTTP 400 TriggerInputSchemaMismatch.
+            val payload = JSONObject().apply {
+                put("action", action)
+                put("id", task.id)
+                put("projectId", task.projectId)
+                put("sharePointId", task.sharePointId)
+                put("createdAt", task.createdAt.toString())
+                put("createdBy", task.createdBy)
+                put("createdByRole", task.createdByRole)
+                put("location", task.location)
+                put("locationOther", task.locationOther)
+                put("owner", task.owner)
+                put("job", task.job)
+                put("start", task.start)
+                put("end", task.end)
+                put("unit", task.unit)
+                put("qty", task.qty)
+                put("removal", task.removal)
+                put("fab", task.fab)
+                put("install", task.install)
+                put("totalProgress", task.totalProgress)
+                put("status", task.status)
+                put("cancelled", if (task.cancelled) "true" else "false")
+                put("mhCal", task.mhCal)
+                put("mhJob", task.mhJob)
+                put("remarks", task.remarks)
+            }
+
             conn.outputStream.use { os ->
-                os.write("{}".toByteArray())
+                os.write(payload.toString().toByteArray())
             }
 
             val code = conn.responseCode
+            val responseBody = if (code in 200..299) {
+                conn.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: "HTTP $code"
+            }
+
             if (code in 200..299) {
                 _isLiveConnected.value = true
                 _connectionStatus.value = "Live — connected to SharePoint"
-                "Success! Power Automate endpoint responded with HTTP $code."
+                Result.success("Synced to SharePoint (HTTP $code)")
             } else {
-                _isLiveConnected.value = false
-                _connectionStatus.value = "Endpoint responded with HTTP $code"
-                "Connected, but endpoint returned HTTP $code."
+                Result.failure(Exception("HTTP $code: $responseBody"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun testConnection(testJobs: Boolean = false): String = withContext(Dispatchers.IO) {
+        try {
+            val targetUrl = if (testJobs) jobsApiUrl else projectsApiUrl
+            val url = URL(targetUrl)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.connectTimeout = 8000
+            conn.readTimeout = 8000
+            conn.setRequestProperty("Accept", "application/json")
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.doOutput = true
+
+            // Send null-safe test schema probe
+            val probeBody = if (testJobs) {
+                JSONObject().apply {
+                    put("action", "test")
+                    put("id", "TEST-000")
+                    put("projectId", "TEST")
+                    put("sharePointId", "")
+                    put("createdAt", System.currentTimeMillis().toString())
+                    put("createdBy", "Test User")
+                    put("createdByRole", "Management")
+                    put("location", "Engine Room")
+                    put("locationOther", "")
+                    put("owner", "")
+                    put("job", "Connection Test Job")
+                    put("start", LocalDate.now().toString())
+                    put("end", LocalDate.now().toString())
+                    put("unit", "pcs")
+                    put("qty", 1.0)
+                    put("removal", 0.0)
+                    put("fab", 0.0)
+                    put("install", 0.0)
+                    put("totalProgress", 0)
+                    put("status", "progress")
+                    put("cancelled", "false")
+                    put("mhCal", "")
+                    put("mhJob", "")
+                    put("remarks", "Connection test probe")
+                }.toString()
+            } else {
+                "{}"
+            }
+
+            conn.outputStream.use { os ->
+                os.write(probeBody.toByteArray())
+            }
+
+            val code = conn.responseCode
+            val endpointName = if (testJobs) "Jobs endpoint" else "Projects endpoint"
+            if (code in 200..299) {
+                _isLiveConnected.value = true
+                _connectionStatus.value = "Live — connected to SharePoint"
+                "Success! $endpointName responded with HTTP $code."
+            } else {
+                val err = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                "Returned HTTP $code: $err"
             }
         } catch (e: Exception) {
             _isLiveConnected.value = false
-            _connectionStatus.value = "Offline — using local storage"
+            _connectionStatus.value = "Offline — local storage active"
             "Connection test error: ${e.message ?: "Network unreachable. Local storage active."}"
         }
     }

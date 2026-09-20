@@ -64,24 +64,49 @@ fun ConnectionDialog(
                     maxLines = 3
                 )
 
-                Button(
-                    onClick = {
-                        isTesting = true
-                        testResult = "Pinging Power Automate endpoint..."
-                        coroutineScope.launch {
-                            val res = repository.testConnection()
-                            testResult = res
-                            isTesting = false
-                        }
-                    },
-                    enabled = !isTesting,
-                    colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("test_connection_button")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(if (isTesting) "Testing Connection..." else "Test SharePoint Connection", fontSize = 12.sp)
+                    Button(
+                        onClick = {
+                            isTesting = true
+                            testResult = "Pinging Projects endpoint..."
+                            coroutineScope.launch {
+                                val res = repository.testConnection(testJobs = false)
+                                testResult = res
+                                isTesting = false
+                            }
+                        },
+                        enabled = !isTesting,
+                        colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("test_projects_button")
+                    ) {
+                        Text(if (isTesting) "Testing..." else "Test Projects", fontSize = 11.5.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            isTesting = true
+                            testResult = "Pinging Jobs endpoint..."
+                            coroutineScope.launch {
+                                val res = repository.testConnection(testJobs = true)
+                                testResult = res
+                                isTesting = false
+                            }
+                        },
+                        enabled = !isTesting,
+                        colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("test_jobs_button")
+                    ) {
+                        Text(if (isTesting) "Testing..." else "Test Jobs", fontSize = 11.5.sp)
+                    }
                 }
 
                 if (testResult != null) {
@@ -96,6 +121,26 @@ fun ConnectionDialog(
                             fontSize = 11.sp,
                             color = TextDark,
                             fontFamily = FontFamily.Monospace
+                        )
+                    }
+                }
+
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = SteelLight),
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            text = "💡 Power Automate Schema Tip",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = NavyPrimary
+                        )
+                        Text(
+                            text = "If Power Automate returns 'TriggerInputSchemaMismatch (Expected String but got Null)', ensure string fields (like remarks or locationOther) in your flow accept null: [\"string\", \"null\"], or pass empty string \"\" instead of null.",
+                            fontSize = 10.5.sp,
+                            color = TextMuted
                         )
                     }
                 }
