@@ -1,0 +1,8 @@
+{
+  "name": "Daily Work Progress",
+  "description": "Daily work progress tracking for shipyard pipe & outfitting projects with progress calculation and job management",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

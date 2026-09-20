@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.8"
+        android:scaleY="0.8"
+        android:translateX="10.8"
+        android:translateY="10.8">
+        <!-- Ship Hull / Drydock base -->
+        <path
+            android:fillColor="#E4F1EE"
+            android:pathData="M24,68 L34,84 L74,84 L84,68 Z" />
+        <path
+            android:fillColor="#146B5C"
+            android:pathData="M28,68 L78,68 L74,74 L32,74 Z" />
+        <!-- Clipboard / Work Progress Document -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M38,28 C38,26 40,24 42,24 L66,24 C68,24 70,26 70,28 L70,64 C70,66 68,68 66,68 L42,68 C40,68 38,66 38,64 Z" />
+        <!-- Clip top -->
+        <path
+            android:fillColor="#A9660C"
+            android:pathData="M48,22 L60,22 C61,22 62,23 62,24 L62,27 L46,27 L46,24 C46,23 47,22 48,22 Z" />
+        <!-- Progress check marks / lines -->
+        <path
+            android:fillColor="#146B5C"
+            android:pathData="M44,36 L48,40 L56,32 L58,34 L48,44 L42,38 Z" />
+        <path
+            android:fillColor="#4C6478"
+            android:pathData="M44,48 L64,48 L64,51 L44,51 Z" />
+        <path
+            android:fillColor="#4C6478"
+            android:pathData="M44,56 L58,56 L58,59 L44,59 Z" />
+    </group>
+</vector>
