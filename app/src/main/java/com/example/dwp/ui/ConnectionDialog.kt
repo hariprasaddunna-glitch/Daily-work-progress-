@@ -25,6 +25,7 @@ fun ConnectionDialog(
     val coroutineScope = rememberCoroutineScope()
     var projectsUrl by remember { mutableStateOf(repository.projectsApiUrl) }
     var jobsUrl by remember { mutableStateOf(repository.jobsApiUrl) }
+    var createProjectUrl by remember { mutableStateOf(repository.createProjectApiUrl) }
     var testResult by remember { mutableStateOf<String?>(null) }
     var isTesting by remember { mutableStateOf(false) }
 
@@ -64,16 +65,25 @@ fun ConnectionDialog(
                     maxLines = 3
                 )
 
+                OutlinedTextField(
+                    value = createProjectUrl,
+                    onValueChange = { createProjectUrl = it },
+                    label = { Text("Create Project API URL", fontSize = 11.5.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, fontFamily = FontFamily.Monospace),
+                    maxLines = 3
+                )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Button(
                         onClick = {
                             isTesting = true
                             testResult = "Pinging Projects endpoint..."
                             coroutineScope.launch {
-                                val res = repository.testConnection(testJobs = false)
+                                val res = repository.testConnection(DwpRepository.TestEndpoint.PROJECTS)
                                 testResult = res
                                 isTesting = false
                             }
@@ -85,7 +95,7 @@ fun ConnectionDialog(
                             .weight(1f)
                             .testTag("test_projects_button")
                     ) {
-                        Text(if (isTesting) "Testing..." else "Test Projects", fontSize = 11.5.sp)
+                        Text(if (isTesting) "..." else "Projects", fontSize = 11.sp)
                     }
 
                     Button(
@@ -93,7 +103,7 @@ fun ConnectionDialog(
                             isTesting = true
                             testResult = "Pinging Jobs endpoint..."
                             coroutineScope.launch {
-                                val res = repository.testConnection(testJobs = true)
+                                val res = repository.testConnection(DwpRepository.TestEndpoint.JOBS)
                                 testResult = res
                                 isTesting = false
                             }
@@ -105,7 +115,27 @@ fun ConnectionDialog(
                             .weight(1f)
                             .testTag("test_jobs_button")
                     ) {
-                        Text(if (isTesting) "Testing..." else "Test Jobs", fontSize = 11.5.sp)
+                        Text(if (isTesting) "..." else "Jobs", fontSize = 11.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            isTesting = true
+                            testResult = "Pinging Create Project endpoint..."
+                            coroutineScope.launch {
+                                val res = repository.testConnection(DwpRepository.TestEndpoint.CREATE_PROJECT)
+                                testResult = res
+                                isTesting = false
+                            }
+                        },
+                        enabled = !isTesting,
+                        colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("test_create_project_button")
+                    ) {
+                        Text(if (isTesting) "..." else "Create Proj", fontSize = 11.sp)
                     }
                 }
 
@@ -151,6 +181,7 @@ fun ConnectionDialog(
                 onClick = {
                     repository.projectsApiUrl = projectsUrl.trim()
                     repository.jobsApiUrl = jobsUrl.trim()
+                    repository.createProjectApiUrl = createProjectUrl.trim()
                     onDismiss()
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = NavySecondary)

@@ -57,6 +57,10 @@ class DwpRepository(private val context: Context) {
         get() = prefs.getString("jobs_api_url", DEFAULT_JOBS_API_URL) ?: DEFAULT_JOBS_API_URL
         set(value) = prefs.edit().putString("jobs_api_url", value).apply()
 
+    var createProjectApiUrl: String
+        get() = prefs.getString("create_project_api_url", DEFAULT_CREATE_PROJECT_API_URL) ?: DEFAULT_CREATE_PROJECT_API_URL
+        set(value) = prefs.edit().putString("create_project_api_url", value).apply()
+
     init {
         loadFromStorage()
     }
@@ -330,6 +334,13 @@ class DwpRepository(private val context: Context) {
         _projects.value = current.sortedBy { it.seq }
         updateRosters()
         saveToStorage()
+
+        // Sync new/updated project to SharePoint in background via Power Automate
+        if (index < 0) {
+            scope.launch {
+                syncProjectToSharePoint(project)
+            }
+        }
     }
 
     fun deleteProject(projectId: String) {
@@ -463,9 +474,62 @@ class DwpRepository(private val context: Context) {
         }
     }
 
-    suspend fun testConnection(testJobs: Boolean = false): String = withContext(Dispatchers.IO) {
+    suspend fun syncProjectToSharePoint(project: Project): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val targetUrl = if (testJobs) jobsApiUrl else projectsApiUrl
+            val url = URL(createProjectApiUrl)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.connectTimeout = 8000
+            conn.readTimeout = 8000
+            conn.setRequestProperty("Accept", "application/json")
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.doOutput = true
+
+            val payload = JSONObject().apply {
+                put("ProjectName", project.name)
+                put("ProjectID", project.id)
+                put("DisplayOrder", project.seq)
+                put("InCharge", project.incharge)
+                put("Foreman", project.foreman)
+                put("EstimatedMH", project.estMH)
+                put("ATD", project.atd)
+                put("OriginalETD", project.etdOrig)
+                put("ExpectedETD", project.etdExp)
+                put("ManagerMessage", project.managerMessage)
+            }
+
+            conn.outputStream.use { os ->
+                os.write(payload.toString().toByteArray())
+            }
+
+            val code = conn.responseCode
+            val responseBody = if (code in 200..299) {
+                conn.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: "HTTP $code"
+            }
+
+            if (code in 200..299) {
+                _isLiveConnected.value = true
+                _connectionStatus.value = "Live — connected to SharePoint"
+                Result.success("Project synced to SharePoint (HTTP $code)")
+            } else {
+                Result.failure(Exception("HTTP $code: $responseBody"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    enum class TestEndpoint { PROJECTS, JOBS, CREATE_PROJECT }
+
+    suspend fun testConnection(endpoint: TestEndpoint = TestEndpoint.PROJECTS): String = withContext(Dispatchers.IO) {
+        try {
+            val targetUrl = when (endpoint) {
+                TestEndpoint.PROJECTS -> projectsApiUrl
+                TestEndpoint.JOBS -> jobsApiUrl
+                TestEndpoint.CREATE_PROJECT -> createProjectApiUrl
+            }
             val url = URL(targetUrl)
             val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
@@ -475,36 +539,50 @@ class DwpRepository(private val context: Context) {
             conn.setRequestProperty("Content-Type", "application/json")
             conn.doOutput = true
 
-            // Send null-safe test schema probe
-            val probeBody = if (testJobs) {
-                JSONObject().apply {
-                    put("action", "test")
-                    put("id", "TEST-000")
-                    put("projectId", "TEST")
-                    put("sharePointId", "")
-                    put("createdAt", System.currentTimeMillis().toString())
-                    put("createdBy", "Test User")
-                    put("createdByRole", "Management")
-                    put("location", "Engine Room")
-                    put("locationOther", "")
-                    put("owner", "")
-                    put("job", "Connection Test Job")
-                    put("start", LocalDate.now().toString())
-                    put("end", LocalDate.now().toString())
-                    put("unit", "pcs")
-                    put("qty", 1.0)
-                    put("removal", 0.0)
-                    put("fab", 0.0)
-                    put("install", 0.0)
-                    put("totalProgress", 0)
-                    put("status", "progress")
-                    put("cancelled", "false")
-                    put("mhCal", "")
-                    put("mhJob", "")
-                    put("remarks", "Connection test probe")
-                }.toString()
-            } else {
-                "{}"
+            val probeBody = when (endpoint) {
+                TestEndpoint.JOBS -> {
+                    JSONObject().apply {
+                        put("action", "test")
+                        put("id", "TEST-000")
+                        put("projectId", "TEST")
+                        put("sharePointId", "")
+                        put("createdAt", System.currentTimeMillis().toString())
+                        put("createdBy", "Test User")
+                        put("createdByRole", "Management")
+                        put("location", "Engine Room")
+                        put("locationOther", "")
+                        put("owner", "")
+                        put("job", "Connection Test Job")
+                        put("start", LocalDate.now().toString())
+                        put("end", LocalDate.now().toString())
+                        put("unit", "pcs")
+                        put("qty", 1.0)
+                        put("removal", 0.0)
+                        put("fab", 0.0)
+                        put("install", 0.0)
+                        put("totalProgress", 0)
+                        put("status", "progress")
+                        put("cancelled", "false")
+                        put("mhCal", "")
+                        put("mhJob", "")
+                        put("remarks", "Connection test probe")
+                    }.toString()
+                }
+                TestEndpoint.CREATE_PROJECT -> {
+                    JSONObject().apply {
+                        put("ProjectName", "Connection Test Project")
+                        put("ProjectID", "TEST-PROJ")
+                        put("DisplayOrder", 999)
+                        put("InCharge", "Test Lead")
+                        put("Foreman", "Test Foreman")
+                        put("EstimatedMH", 100)
+                        put("ATD", LocalDate.now().toString())
+                        put("OriginalETD", LocalDate.now().plusDays(10).toString())
+                        put("ExpectedETD", LocalDate.now().plusDays(10).toString())
+                        put("ManagerMessage", "Probe connection test")
+                    }.toString()
+                }
+                TestEndpoint.PROJECTS -> "{}"
             }
 
             conn.outputStream.use { os ->
@@ -512,7 +590,11 @@ class DwpRepository(private val context: Context) {
             }
 
             val code = conn.responseCode
-            val endpointName = if (testJobs) "Jobs endpoint" else "Projects endpoint"
+            val endpointName = when (endpoint) {
+                TestEndpoint.PROJECTS -> "Projects endpoint"
+                TestEndpoint.JOBS -> "Jobs endpoint"
+                TestEndpoint.CREATE_PROJECT -> "Create Project endpoint"
+            }
             if (code in 200..299) {
                 _isLiveConnected.value = true
                 _connectionStatus.value = "Live — connected to SharePoint"
@@ -527,6 +609,9 @@ class DwpRepository(private val context: Context) {
             "Connection test error: ${e.message ?: "Network unreachable. Local storage active."}"
         }
     }
+
+    suspend fun testConnection(testJobs: Boolean): String =
+        testConnection(if (testJobs) TestEndpoint.JOBS else TestEndpoint.PROJECTS)
 
     // JSON serialization helpers
     private fun serializeProjects(list: List<Project>): String {
@@ -663,5 +748,7 @@ class DwpRepository(private val context: Context) {
             "https://defaulte1db4b0fa7714773a87bf2bada9d03.c6.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/00/workflows/d7b2295325124cbcaf87bdcc93d85c49/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Bwc2ZEh3fZ3mMHJskYUyAVt0NQCyjhHGSey37RH8Rq0"
         const val DEFAULT_JOBS_API_URL =
             "https://defaulte1db4b0fa7714773a87bf2bada9d03.c6.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/25/workflows/9f54ae5d368240ee8a5ee703d4c4d820/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=LnuVu6OZzq1tcZ8YC0Z1wijsJiq7jnvQLXcZN6Givqc"
+        const val DEFAULT_CREATE_PROJECT_API_URL =
+            "https://defaulte1db4b0fa7714773a87bf2bada9d03.c6.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/03/workflows/ae744768599a4a6f9cf2402416f5d66f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RqtsDb8ZDdshSsKL7XVKZcPAwYixa1PZN1-bbqgA8yI"
     }
 }
