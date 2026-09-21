@@ -323,8 +323,12 @@
   <section id="apiPanel" class="panel hidden" style="margin-bottom:14px;">
     <div class="panel-head"><h2>SharePoint / Power Automate Connection Test</h2><span id="apiStatus" class="chip">Not tested</span></div>
     <div class="panel-body">
-      <p style="margin:0 0 10px;color:var(--muted);font-size:13px;">The Projects, Jobs, Create Job, Update Job and Create Project URLs are all fixed inside this file — there is nothing to paste here. Use the button below only to check whether the built-in connection is currently reachable.</p>
-      <button class="btn primary" onclick="testPowerAutomateProjects()">Test Projects Connection</button>
+      <p style="margin:0 0 10px;color:var(--muted);font-size:13px;">The Projects, Jobs, Create Job, Update Job and Create Project URLs are all fixed inside this file — there is nothing to paste here. Use the buttons below to check whether the built-in connections are currently reachable.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn primary" onclick="testPowerAutomateProjects()">Test Projects Connection</button>
+        <button class="btn secondary" onclick="testPowerAutomateJobs()">Test Jobs Connection</button>
+        <button class="btn secondary" onclick="testPowerAutomateCreateProject()">Test Create Project</button>
+      </div>
       <div style="margin-top:12px;font-size:11.5px;color:var(--text-mute);line-height:1.5;">To change a URL in the future: open this file in a plain text editor (e.g. Notepad), find the <code>DEFAULT_PROJECTS_API_URL</code>, <code>DEFAULT_JOBS_API_URL</code>, <code>DEFAULT_CREATE_JOB_API_URL</code>, <code>UPDATE_JOB_API_URL</code> or <code>CREATE_PROJECT_API_URL</code> line near the top of the script, replace the URL between the quotes, save, and re-share the file. No coding needed beyond that.</div>
       <div id="apiResult" style="margin-top:10px;font-size:13px;"></div>
     </div>
@@ -994,6 +998,58 @@ async function testPowerAutomateProjects(){
     result.innerHTML='<b style="color:var(--red)">Connection failed.</b> '+esc(e.message||String(e))+'<div style="margin-top:6px;color:var(--muted)">If the flow succeeds in Power Automate but the browser reports a CORS/network error, we will handle that in the next integration step.</div>';
   }
 }
+async function testPowerAutomateJobs(){
+  const url=getJobsApiUrl();
+  const result=document.getElementById('apiResult');
+  if(!url){alert('No Jobs API URL configured.');return;}
+  setApiStatus('Testing Jobs…','progress');
+  result.textContent='Sending request to Jobs endpoint…';
+  try{
+    const response=await fetch(url,{method:'POST',headers:{'Accept':'application/json'}});
+    const text=await response.text();
+    let data=text; try{data=JSON.parse(text);}catch(e){}
+    if(!response.ok) throw new Error('HTTP '+response.status+' — '+text.slice(0,500));
+    const jobs=parseJobsApiResponse(data);
+    setApiStatus('Jobs Connected ✓','ok');
+    result.innerHTML='<b style="color:var(--teal)">Success.</b> Power Automate responded and SharePoint DWP Jobs returned <b>'+jobs.length+'</b> item(s).';
+  }catch(e){
+    setApiStatus('Jobs Failed','bad');
+    result.innerHTML='<b style="color:var(--red)">Jobs connection failed.</b> '+esc(e.message||String(e));
+  }
+}
+async function testPowerAutomateCreateProject(){
+  const url=CREATE_PROJECT_API_URL;
+  const result=document.getElementById('apiResult');
+  if(!url){alert('No Create Project API URL configured.');return;}
+  setApiStatus('Testing Create Project…','progress');
+  result.textContent='Pinging Create Project flow…';
+  try{
+    const probe = {
+      ProjectName: 'Connection Test Project',
+      ProjectID: 'PROBE-TEST',
+      DisplayOrder: 999,
+      InCharge: 'Test Lead',
+      Foreman: 'Test Foreman',
+      EstimatedMH: 100,
+      ATD: todayISO(),
+      OriginalETD: todayISO(),
+      ExpectedETD: todayISO(),
+      ManagerMessage: 'Connection probe test'
+    };
+    const response=await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(probe)
+    });
+    const text=await response.text();
+    if(!response.ok) throw new Error('HTTP '+response.status+' — '+text.slice(0,500));
+    setApiStatus('Create Project ✓','ok');
+    result.innerHTML='<b style="color:var(--teal)">Success.</b> Create Project Power Automate endpoint responded with HTTP '+response.status+'.';
+  }catch(e){
+    setApiStatus('Create Proj Failed','bad');
+    result.innerHTML='<b style="color:var(--red)">Create Project endpoint failed.</b> '+esc(e.message||String(e));
+  }
+}
 
 // ---------- INDEX ----------
 let projectsCache = [];
@@ -1279,15 +1335,15 @@ async function submitNewProject(){
   if(!editingProjectId){
     try{
       const createPayload = {
-        ProjectName: project.name,
-        ProjectID: project.id,
-        DisplayOrder: project.seq === '' ? null : Number(project.seq),
-        InCharge: project.incharge,
-        Foreman: project.foreman,
-        EstimatedMH: project.estMH === '' ? null : Number(project.estMH),
-        ATD: project.atd,
-        OriginalETD: project.etdOrig || null,
-        ExpectedETD: project.etdExp,
+        ProjectName: project.name || '',
+        ProjectID: project.id || '',
+        DisplayOrder: (project.seq === '' || isNaN(Number(project.seq))) ? 0 : Math.round(Number(project.seq)),
+        InCharge: project.incharge || '',
+        Foreman: project.foreman || '',
+        EstimatedMH: (project.estMH === '' || isNaN(Number(project.estMH))) ? 0 : Math.round(Number(project.estMH)),
+        ATD: project.atd || '',
+        OriginalETD: project.etdOrig || '',
+        ExpectedETD: project.etdExp || '',
         ManagerMessage: project.managerMessage || ''
       };
       console.info('DWP Create Project — payload sent:', createPayload);

@@ -1335,15 +1335,15 @@ async function submitNewProject(){
   if(!editingProjectId){
     try{
       const createPayload = {
-        ProjectName: project.name,
-        ProjectID: project.id,
-        DisplayOrder: project.seq === '' ? null : Number(project.seq),
-        InCharge: project.incharge,
-        Foreman: project.foreman,
-        EstimatedMH: project.estMH === '' ? null : Number(project.estMH),
-        ATD: project.atd,
-        OriginalETD: project.etdOrig || null,
-        ExpectedETD: project.etdExp,
+        ProjectName: project.name || '',
+        ProjectID: project.id || '',
+        DisplayOrder: (project.seq === '' || isNaN(Number(project.seq))) ? 0 : Math.round(Number(project.seq)),
+        InCharge: project.incharge || '',
+        Foreman: project.foreman || '',
+        EstimatedMH: (project.estMH === '' || isNaN(Number(project.estMH))) ? 0 : Math.round(Number(project.estMH)),
+        ATD: project.atd || '',
+        OriginalETD: project.etdOrig || '',
+        ExpectedETD: project.etdExp || '',
         ManagerMessage: project.managerMessage || ''
       };
       console.info('DWP Create Project — payload sent:', createPayload);
