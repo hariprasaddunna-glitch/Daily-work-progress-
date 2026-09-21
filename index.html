@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Work Progress — V21</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0F2438; --navy-2:#16324C; --steel:#4C6478; --steel-light:#EDF1F4;
+    --hull:#F6F5F1; --teal:#146B5C; --teal-bg:#E4F1EE; --amber:#A9660C; --amber-bg:#FBEFDD;
+    --red:#A23B2E; --red-bg:#FAE7E3; --line:#DADFE3; --text:#152534; --text-mute:#5C6C7A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--hull);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;line-height:1.5;}
+  header{background:var(--navy);color:#fff;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--amber);flex-wrap:wrap;gap:10px;}
+  header .brand-row{display:flex;align-items:center;gap:14px;}
+  header .logo{height:30px;width:auto;background:#fff;border-radius:4px;padding:3px 6px;}
+  header .brand{font-size:11.5px;letter-spacing:.04em;color:#9FB2C2;}
+  header h1{margin:2px 0 0;font-size:19px;font-weight:600;}
+  nav{display:flex;gap:6px;}
+  nav button{background:transparent;border:1px solid #2C4157;color:#C9D6E0;padding:8px 16px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;}
+  nav button.active{background:#fff;color:var(--navy);border-color:#fff;font-weight:600;}
+  main{padding:24px 28px 60px;max-width:1200px;margin:0 auto;}
+  .hidden{display:none !important;}
+
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+  @media(max-width:900px){.dash-grid{grid-template-columns:1fr;}}
+  .chart-row{display:flex;align-items:center;gap:10px;padding:6px 0;}
+  .chart-row .name{width:150px;font-size:12.5px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .chart-row .track{flex:1;background:var(--steel-light);border-radius:3px;height:14px;overflow:hidden;}
+  .chart-row .fill{height:100%;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:10.5px;color:#fff;font-weight:500;}
+  .chart-scroll{max-height:420px;overflow-y:auto;padding-right:4px;}
+  .mini-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);gap:10px;}
+  .mini-row:last-child{border-bottom:none;}
+  .mini-row .who{font-size:13px;}
+  .mini-row .when{font-size:11.5px;color:var(--text-mute);white-space:nowrap;}
+  .urgent-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;}
+
+  .summary-group{border:1px solid var(--line);border-radius:6px;margin-bottom:14px;overflow:hidden;}
+  .summary-group-head{background:var(--steel-light);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--line);}
+  .summary-group-head .title{font-size:13.5px;font-weight:600;color:var(--navy);}
+  .summary-group-head .sub{font-size:11.5px;color:var(--text-mute);margin-top:2px;}
+  .summary-group-head .meta{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--text-mute);}
+  .summary-group table{font-size:12.5px;}
+  .summary-group th, .summary-group td{padding:7px 12px;}
+
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+  .metric{background:#fff;border:1px solid var(--line);border-radius:6px;padding:14px 16px;}
+  .metric .label{font-size:11.5px;color:var(--text-mute);text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px;}
+  .metric .value{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:500;color:var(--navy);}
+  .metric.behind .value{color:var(--red);}
+  .metric.progress .value{color:var(--navy-2);}
+  .metric.done .value{color:var(--teal);}
+
+  .panel{background:#fff;border:1px solid var(--line);border-radius:6px;margin-bottom:22px;overflow:hidden;}
+  .panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--steel-light);flex-wrap:wrap;gap:10px;}
+  .panel-head h2{margin:0;font-size:14.5px;font-weight:600;color:var(--navy);}
+  .panel-body{padding:16px 18px;}
+
+  button.btn{font-family:inherit;font-size:12.5px;padding:7px 14px;border-radius:5px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--text);}
+  button.btn.primary{background:var(--navy-2);color:#fff;border-color:var(--navy-2);}
+  button.btn.danger{color:var(--red);border-color:var(--red-bg);}
+  button.btn:hover{filter:brightness(0.97);}
+  button.btn:disabled{opacity:.5;cursor:not-allowed;}
+  .onedrive-status{font-size:11.5px;color:#C9D6E0;margin-left:8px;white-space:nowrap;}
+  .onedrive-status.ok{color:#9FE0C9;} .onedrive-status.err{color:#FFB4A9;}
+
+  .live-badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:20px;margin-right:auto;white-space:nowrap;}
+  .live-badge .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .live-badge.checking{background:var(--steel-light);color:var(--text-mute);}
+  .live-badge.checking .dot{background:var(--text-mute);animation:pulse 1.1s infinite;}
+  .live-badge.live{background:var(--teal-bg);color:var(--teal);}
+  .live-badge.live .dot{background:var(--teal);}
+  .live-badge.offline{background:var(--amber-bg);color:var(--amber);}
+  .live-badge.offline .dot{background:var(--amber);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  select,input[type=text],input[type=number],input[type=date],textarea{
+    font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:7px 9px;border:1px solid var(--line);
+    border-radius:4px;background:#fff;color:var(--text);width:100%;
+  }
+  textarea{resize:vertical;min-height:60px;}
+  .manager-message{margin:0 16px 12px;padding:10px 14px;border-radius:6px;background:var(--amber-bg,#FFF4E5);border:1px solid var(--amber,#C87F0A);font-size:13px;line-height:1.5;color:var(--text);display:flex;gap:10px;align-items:flex-start;}
+  .manager-message .icon{font-size:16px;line-height:1;flex-shrink:0;}
+  .manager-message b{color:var(--amber,#C87F0A);}
+  label{font-size:12px;color:var(--text-secondary,#3d4a56);display:block;margin-bottom:4px;}
+  .field-err{font-size:11px;color:var(--red);margin-top:4px;display:none;}
+  .field-err.show{display:block;}
+
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-mute);font-weight:500;padding:9px 14px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  td{padding:9px 14px;border-bottom:1px solid var(--line);font-size:13px;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#FAFBFB;}
+  .empty-row td{text-align:center;color:var(--text-mute);padding:24px;}
+
+  .chip{display:inline-block;font-size:11px;font-weight:500;padding:3px 9px;border-radius:3px;white-space:nowrap;}
+  .chip.done{background:var(--teal-bg);color:var(--teal);}
+  .chip.progress{background:#E4EAF0;color:var(--navy-2);}
+  .chip.behind{background:var(--red-bg);color:var(--red);}
+  .chip.high{background:var(--red-bg);color:var(--red);}
+  .chip.medium{background:var(--amber-bg);color:var(--amber);}
+  .chip.low{background:#EAECE7;color:var(--text-mute);}
+  .chip.cancelled{background:#EAECE7;color:var(--text-mute);text-decoration:line-through;}
+
+  tr.row-cancelled td{color:var(--text-mute);background:#FAFAF8;}
+  tr.row-cancelled .job-desc{text-decoration:line-through;}
+
+  .stage-val{font-family:'IBM Plex Mono',monospace;}
+  .stage-of{color:var(--text-mute);font-size:11px;}
+  .progress-preview{font-size:12.5px;color:var(--text-mute);margin-top:4px;}
+  .progress-preview b{color:var(--navy);font-family:'IBM Plex Mono',monospace;}
+  .row-actions{white-space:nowrap;}
+  .row-actions .link-btn{font-size:12px;}
+  input.edit-input{padding:5px 6px;font-size:12.5px;width:64px;}
+
+  .bar-track{background:var(--steel-light);border-radius:3px;height:6px;width:80px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px;}
+  .bar-fill{background:var(--navy-2);height:100%;}
+  .bar-fill.low{background:var(--red);} .bar-fill.high{background:var(--teal);}
+
+  .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .form-grid .span2{grid-column:span 2;}
+  .form-grid .span3{grid-column:span 3;}
+  @media(max-width:800px){.form-grid{grid-template-columns:1fr 1fr;} .metrics{grid-template-columns:1fr 1fr;}}
+
+  .status-banner{font-size:12.5px;padding:8px 14px;border-radius:5px;margin-bottom:14px;}
+  .status-banner.err{background:var(--red-bg);color:var(--red);}
+  .status-banner.ok{background:var(--teal-bg);color:var(--teal);}
+
+  .meta-row{display:flex;gap:22px;padding:12px 18px;font-size:12.5px;color:var(--text-mute);border-bottom:1px solid var(--line);flex-wrap:wrap;background:var(--steel-light);}
+  .meta-row span b{color:var(--text);font-weight:600;}
+  .link-btn{background:none;border:none;color:var(--navy-2);text-decoration:underline;cursor:pointer;font-size:13px;padding:0;font-family:inherit;}
+  .spin{font-size:12px;color:var(--text-mute);}
+  .print-title{display:none;}
+  .app-shell{display:flex;min-height:100vh;}
+  .side-nav{width:215px;background:var(--navy);color:#fff;position:sticky;top:0;height:100vh;padding:18px 12px;flex-shrink:0;display:flex;flex-direction:column;}
+  .side-brand{padding:4px 10px 18px;border-bottom:1px solid #2C4157;margin-bottom:12px;}
+  .side-brand .brand{font-size:10px;letter-spacing:.04em;color:#9FB2C2;}
+  .side-brand h1{font-size:18px;margin:4px 0 0;font-weight:600;}
+  .side-nav nav{display:flex;flex-direction:column;gap:6px;}
+  .side-nav nav button{width:100%;text-align:left;background:transparent;border:1px solid transparent;color:#C9D6E0;padding:10px 12px;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;}
+  .side-nav nav button.active{background:#fff;color:var(--navy);font-weight:600;}
+  .side-bottom{margin-top:auto;border-top:1px solid #2C4157;padding:12px 8px 0;font-size:11px;color:#9FB2C2;}
+  .side-user{color:#fff;font-size:12px;margin-bottom:8px;word-break:break-word;}
+  .content-wrap{min-width:0;flex:1;}
+  .topbar{display:flex;justify-content:flex-end;align-items:center;padding:10px 24px;background:#fff;border-bottom:1px solid var(--line);gap:10px;min-height:50px;}
+  .role-badge{font-size:11.5px;padding:4px 8px;border-radius:4px;background:var(--steel-light);color:var(--navy);font-weight:600;}
+  .filter-bar{display:flex;gap:8px;align-items:end;flex-wrap:wrap;padding:12px 18px;background:#fff;border-bottom:1px solid var(--line);}
+  .filter-bar .filter-field{min-width:150px;flex:1;}
+  .filter-bar .filter-field.small{min-width:125px;max-width:190px;}
+  .filter-bar label{margin-bottom:3px;}
+  .filter-bar input,.filter-bar select{padding:6px 8px;}
+
+  /* Project task table: responsive, readable, no page-wide horizontal scroll */
+  .project-task-wrap{width:100%;overflow:hidden;}
+  .project-task-table{width:100%;table-layout:fixed;}
+  .project-task-table th,.project-task-table td{padding:7px 7px;vertical-align:top;}
+  .project-task-table th{font-size:10px;}
+  .project-task-table td{font-size:12px;overflow-wrap:anywhere;word-break:normal;}
+  .project-task-table .job-desc,.project-task-table .remarks-cell{white-space:normal;line-height:1.3;}
+  .project-task-table .stage-val{white-space:nowrap;}
+  .project-task-table .row-actions{white-space:normal;text-align:center;}
+  .project-task-table .row-actions .link-btn{display:block;margin:2px auto;font-size:11px;line-height:1.25;}
+  .project-task-table th:nth-child(1){width:8%;}.project-task-table th:nth-child(2){width:6%;}.project-task-table th:nth-child(3){width:15%;}
+  .project-task-table th:nth-child(4),.project-task-table th:nth-child(5){width:7%;}.project-task-table th:nth-child(6){width:4.5%;}
+  .project-task-table th:nth-child(7),.project-task-table th:nth-child(8),.project-task-table th:nth-child(9){width:5.5%;}
+  .project-task-table th:nth-child(10){width:8%;}.project-task-table th:nth-child(11){width:7%;}
+  .project-task-table th:nth-child(12),.project-task-table th:nth-child(13){width:5.5%;}.project-task-table th:nth-child(14){width:10%;}.project-task-table th:nth-child(15){width:9%;}
+  .project-head-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;width:100%;}
+  .project-head-actions #projectSelect{width:auto!important;min-width:220px;flex:1 1 240px;max-width:340px;}
+  .project-head-actions .btn{flex:0 0 auto;}
+  .project-filter-grid{display:grid;grid-template-columns:minmax(180px,2fr) minmax(160px,1fr) minmax(160px,1fr) auto;gap:10px;align-items:end;width:100%;}
+  .multi-filter{min-height:74px!important;height:auto!important;}
+  .filter-help{font-size:10px;color:var(--text-mute);margin-top:3px;}
+  .summary-filter-grid{display:grid;grid-template-columns:minmax(180px,1.6fr) minmax(150px,1fr) minmax(150px,1fr) minmax(150px,1fr) auto;gap:10px;align-items:end;width:100%;}
+  .summary-filter-grid .filter-search{min-width:180px;}
+  .summary-multi{min-height:76px!important;height:auto!important;}
+  .active-only-wrap{display:flex;align-items:center;gap:7px;padding:7px 4px 8px;white-space:nowrap;font-size:12px;color:var(--text);}
+  .active-only-wrap input{width:auto!important;margin:0;}
+  @media(max-width:1050px){.summary-filter-grid{grid-template-columns:1fr 1fr;}.summary-filter-grid .filter-search{grid-column:1/-1;}}
+  @media(max-width:700px){.summary-filter-grid{grid-template-columns:1fr;}.summary-filter-grid .filter-search{grid-column:auto;}}
+  @media(max-width:1050px){
+    .project-task-table th:nth-child(4),.project-task-table td:nth-child(4),.project-task-table th:nth-child(5),.project-task-table td:nth-child(5),.project-task-table th:nth-child(12),.project-task-table td:nth-child(12),.project-task-table th:nth-child(13),.project-task-table td:nth-child(13){display:none;}
+    .project-task-table th:nth-child(1){width:9%;}.project-task-table th:nth-child(2){width:7%;}.project-task-table th:nth-child(3){width:19%;}
+    .project-task-table th:nth-child(6){width:6%;}.project-task-table th:nth-child(7),.project-task-table th:nth-child(8),.project-task-table th:nth-child(9){width:7%;}
+    .project-task-table th:nth-child(10){width:10%;}.project-task-table th:nth-child(11){width:8%;}.project-task-table th:nth-child(14){width:13%;}.project-task-table th:nth-child(15){width:10%;}
+    .project-filter-grid{grid-template-columns:1fr 1fr;}.project-filter-grid .filter-search{grid-column:1/-1;}
+  }
+  @media(max-width:700px){
+    .project-task-table th:nth-child(7),.project-task-table td:nth-child(7),.project-task-table th:nth-child(8),.project-task-table td:nth-child(8),.project-task-table th:nth-child(9),.project-task-table td:nth-child(9){display:none;}
+    .project-task-table th:nth-child(1){width:13%;}.project-task-table th:nth-child(2){width:9%;}.project-task-table th:nth-child(3){width:27%;}.project-task-table th:nth-child(6){width:8%;}
+    .project-task-table th:nth-child(10){width:12%;}.project-task-table th:nth-child(11){width:10%;}.project-task-table th:nth-child(14){width:14%;}.project-task-table th:nth-child(15){width:14%;}
+    .project-task-table th,.project-task-table td{padding:6px 5px;font-size:11px;}
+    .project-filter-grid{grid-template-columns:1fr;} .project-filter-grid .filter-search{grid-column:auto;}
+    .project-head-actions{justify-content:stretch;} .project-head-actions .btn{flex:1 1 auto;}
+  }
+
+  .inline-edit{width:100%;min-width:70px;padding:5px 6px;font-size:12px;}
+  .inline-edit.job{min-width:150px;}
+  .inline-edit.remarks{min-width:130px;}
+  .login-overlay{position:fixed;inset:0;background:rgba(15,36,56,.94);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-card{background:#fff;border-radius:10px;width:min(440px,100%);padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.28);}
+  .login-card h2{margin:0 0 6px;color:var(--navy);font-size:20px;}
+  .login-card p{margin:0 0 18px;color:var(--text-mute);font-size:13px;}
+  .login-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .login-option{padding:14px;border:1px solid var(--line);background:#fff;border-radius:7px;cursor:pointer;text-align:center;font-family:inherit;font-weight:600;color:var(--navy);}
+  .login-option.active{border-color:var(--navy-2);background:var(--steel-light);}
+  .login-card .login-actions{margin-top:14px;display:flex;justify-content:flex-end;}
+  .login-note{font-size:11px;color:var(--text-mute);margin-top:14px;line-height:1.45;}
+  @media(max-width:800px){.side-nav{width:170px}.side-brand h1{font-size:16px}main{padding:18px 14px 50px}.filter-bar{padding:10px 12px}}
+  @media(max-width:620px){.app-shell{display:block}.side-nav{position:static;width:100%;height:auto}.side-nav nav{flex-direction:row;overflow-x:auto}.side-nav nav button{white-space:nowrap;width:auto}.side-bottom{display:none}.topbar{padding:8px 12px}.login-options{grid-template-columns:1fr}}
+
+  @media print{
+    @page{size:A4 landscape;margin:10mm;}
+    .side-nav, .topbar, .panel-head button, .link-btn, #newProjectFormWrap, #taskFormWrap,
+    .metrics, #taskRefreshNote, .row-actions, th.actions-col { display:none !important; }
+    /* Project print: show only the project/job table, not the job filters. */
+    #tabProject .filter-bar { display:none !important; }
+    body{background:#fff !important;color:#000 !important;font-size:10px;}
+    .content-wrap{width:100%;}
+
+    .print-title{display:block !important;font-size:13px;font-weight:600;color:#000;margin:6px 0 8px;}
+    main{padding:6px 0 0;max-width:none;}
+    .panel{border:none;box-shadow:none;margin-bottom:10px;}
+    .panel-head{background:#fff !important;border-bottom:2px solid #000;padding:5px 0;}
+    .panel-head h2{font-size:13px;color:#000;}
+
+    /* Printer-friendly table layout */
+    table{width:100% !important;font-size:9.5px;border:1px solid #000 !important;table-layout:auto;}
+    thead{display:table-header-group;}
+    th{background:#E9ECEF !important;color:#000 !important;font-size:9px;font-weight:700;padding:5px 5px;border:1px solid #000 !important;text-transform:uppercase;}
+    td{padding:5px 5px;border:1px solid #000 !important;vertical-align:top;color:#000 !important;background:#fff !important;}
+    tr:last-child td{border-bottom:1px solid #000 !important;}
+    tr{break-inside:avoid;page-break-inside:avoid;}
+    .job-desc{min-width:130px;}
+    .summary-group{break-inside:avoid;page-break-inside:avoid;border:none !important;margin:0 0 10px;}
+    .summary-group-head{display:grid !important;grid-template-columns:1fr auto;align-items:center;background:#fff !important;border:1px solid #000;border-bottom:none;padding:6px 8px;}
+    .summary-group-head .title{font-size:11px;font-weight:700;color:#000;}
+    .summary-group-head .sub{font-size:9px;color:#000;margin-top:2px;}
+    .summary-group-head .meta{font-size:9px;color:#000;gap:8px;}
+    .summary-group table{font-size:8.5px;border-top:1px solid #000 !important;table-layout:auto;}
+    .summary-group th,.summary-group td{padding:4px 5px;}
+    .meta-row{display:grid !important;grid-template-columns:repeat(5,1fr);gap:0;background:#fff !important;border:1px solid #000;padding:0;margin-bottom:8px;}
+    .meta-row span{padding:5px 7px;border-right:1px solid #000;color:#000 !important;}
+    .meta-row span:last-child{border-right:none;}
+    .meta-row span b{color:#000 !important;}
+    .chip{border:1px solid #000 !important;background:#fff !important;color:#000 !important;padding:2px 5px;}
+    .bar-track{display:none !important;}
+    .bar-fill{display:none !important;}
+    .empty-row td{text-align:center;padding:10px;}
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div id="loginOverlay" class="login-overlay">
+  <div class="login-card">
+    <h2>Daily Work Progress</h2>
+    <p>Select your access type to continue.</p>
+    <div class="login-options">
+      <button id="loginManagementBtn" class="login-option active" onclick="selectLoginRole('management')">Management</button>
+      <button id="loginEngineerBtn" class="login-option" onclick="selectLoginRole('engineer')">Engineer</button>
+    </div>
+    <div id="managementLoginWrap">
+      <label style="display:block;font-size:12px;margin:8px 0 4px;font-weight:600;">Management Password</label>
+      <input id="managementLoginPassword" type="password" placeholder="Enter password (default: admin)" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:4px;box-sizing:border-box;font-family:inherit;">
+      <div id="loginPasswordError" style="color:var(--red);font-size:11.5px;margin-top:4px;display:none;"></div>
+      <div style="font-size:11px;color:var(--text-mute);margin-top:4px;">Default password: <code>admin</code></div>
+    </div>
+    <div id="engineerLoginWrap" class="hidden">
+      <label>Engineer name</label>
+      <select id="engineerLoginName"></select>
+    </div>
+    <div class="login-actions"><button class="btn primary" onclick="loginUser()">Continue</button></div>
+    <div class="login-note">This role screen controls the HTML interface. When the app is moved to SharePoint Lists, SharePoint permissions should be used as the final security layer.</div>
+  </div>
+</div>
+<div class="app-shell" id="appShell">
+  <aside class="side-nav">
+    <div class="side-brand"><div class="brand">ASYAD DRYDOCK · PIPE &amp; OUTFITTING DEPARTMENT</div><h1>Daily Work Progress</h1></div>
+    <nav>
+      <button id="tabBtnDashboard" class="active" onclick="switchTab('dashboard')">Dashboard</button>
+      <button id="tabBtnIndex" onclick="switchTab('index')">Index</button>
+      <button id="tabBtnSummary" onclick="switchTab('summary')">Summary</button>
+      <button id="tabBtnProject" onclick="switchTab('project')">Project</button>
+      <button id="connectionBtn" class="management-only hidden" onclick="toggleApiPanel()">⚙ Connection Test</button>
+      <button id="passwordBtn" class="management-only hidden" onclick="togglePasswordPanel()">🔐 Password</button>
+    </nav>
+    <div class="side-bottom"><div class="side-user" id="sideUser">Not signed in</div><button class="btn" style="width:100%;" onclick="logoutUser()">Logout</button></div>
+  </aside>
+  <div class="content-wrap">
+    <div class="topbar"><span id="liveBadge" class="live-badge checking"><span class="dot"></span>Checking…</span><span id="roleBadge" class="role-badge">Not signed in</span></div>
+    <div class="print-title" id="printTitle"></div>
+<main>
+  <!-- SHAREPOINT API TEST -->
+  <section id="passwordPanel" class="panel hidden" style="margin-bottom:14px;">
+    <div class="panel-head"><h2>🔐 Management Password Security</h2><button class="btn" onclick="togglePasswordPanel()" style="padding:2px 8px;font-size:12px;">✕ Close</button></div>
+    <div class="panel-body">
+      <div style="max-width:480px;">
+        <p style="margin:0 0 12px;color:var(--text-mute);font-size:12.5px;">Update administrator password used to access the Management role.</p>
+        <div style="margin-bottom:10px;">
+          <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;">Current Password</label>
+          <input id="pwdCurrent" type="password" placeholder="Enter current password (default: admin)" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:4px;box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;">New Password</label>
+          <input id="pwdNew" type="password" placeholder="Enter new password (min 4 characters)" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:4px;box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:11.5px;font-weight:600;margin-bottom:4px;">Confirm New Password</label>
+          <input id="pwdConfirm" type="password" placeholder="Confirm new password" style="width:100%;padding:8px;border:1px solid var(--line);border-radius:4px;box-sizing:border-box;">
+        </div>
+        <div id="pwdFeedback" style="font-size:12px;font-weight:600;margin-bottom:10px;display:none;"></div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn primary" onclick="saveNewPassword()">Update Password</button>
+          <button class="btn" onclick="resetPasswordDefault()">Reset to 'admin'</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="apiPanel" class="panel hidden" style="margin-bottom:14px;">
+    <div class="panel-head"><h2>SharePoint / Power Automate Connection Test</h2><span id="apiStatus" class="chip">Not tested</span></div>
+    <div class="panel-body">
+      <p style="margin:0 0 10px;color:var(--muted);font-size:13px;">The Projects, Jobs, Create Job, Update Job and Create Project URLs are all fixed inside this file — there is nothing to paste here. Use the button below only to check whether the built-in connection is currently reachable.</p>
+      <button class="btn primary" onclick="testPowerAutomateProjects()">Test Projects Connection</button>
+      <div style="margin-top:12px;font-size:11.5px;color:var(--text-mute);line-height:1.5;">To change a URL in the future: open this file in a plain text editor (e.g. Notepad), find the <code>DEFAULT_PROJECTS_API_URL</code>, <code>DEFAULT_JOBS_API_URL</code>, <code>DEFAULT_CREATE_JOB_API_URL</code>, <code>UPDATE_JOB_API_URL</code> or <code>CREATE_PROJECT_API_URL</code> line near the top of the script, replace the URL between the quotes, save, and re-share the file. No coding needed beyond that.</div>
+      <div id="apiResult" style="margin-top:10px;font-size:13px;"></div>
+    </div>
+  </section>
+
+
+  <!-- DASHBOARD TAB -->
+  <section id="tabDashboard">
+    <div class="metrics" id="dashMetrics"></div>
+
+    <div class="dash-grid">
+      <div class="panel">
+        <div class="panel-head"><h2>Progress by project</h2></div>
+        <div class="panel-body">
+          <div class="chart-scroll" id="chartProgress"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>In-charge workload</h2></div>
+        <table>
+          <thead><tr><th>In-charge</th><th>Running</th><th>Completed</th><th>Upcoming</th><th>Total</th></tr></thead>
+          <tbody id="inchargeBody"><tr class="empty-row"><td colspan="5">Loading…</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Upcoming projects (not yet arrived)</h2></div>
+        <div class="panel-body">
+          <div id="upcomingList"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Sailing out soon (within 7 days)</h2></div>
+        <div class="panel-body">
+          <div id="sailoutList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INDEX TAB -->
+  <section id="tabIndex" class="hidden">
+    <div class="metrics" id="indexMetrics"></div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Index — all projects</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" onclick="loadProjects()">Refresh</button>
+          <button class="btn" onclick="exportProjectsExcel()">Download Excel</button>
+          <button class="btn primary management-only" onclick="openNewProjectForm()">+ New project</button>
+        </div>
+      </div>
+      <div class="panel-body hidden" id="newProjectFormWrap">
+        <p style="font-weight:500;font-size:13.5px;margin:0 0 10px;color:var(--navy)" id="npFormTitle">New project</p>
+        <div id="newProjectStatus"></div>
+        <div class="form-grid">
+          <div><label>Display order</label><input type="number" id="npSeq" min="1" step="1" placeholder="1, 2, 3…"><div style="font-size:11px;color:var(--muted);margin-top:4px;">Used only to arrange projects.</div></div>
+          <div class="span2"><label>Project no &amp; name *</label><input type="text" id="npName" placeholder="PRJ-004 Ferry Drydock"></div>
+          <div>
+            <label>Project in-charge</label>
+            <select id="npIncharge" onchange="onPeopleSelect('npIncharge','npInchargeOtherWrap')"></select>
+            <div id="npInchargeOtherWrap" class="hidden" style="margin-top:6px;"><input type="text" id="npInchargeOther" placeholder="Enter name"></div>
+          </div>
+          <div>
+            <label>Project foreman</label>
+            <select id="npForeman" onchange="onPeopleSelect('npForeman','npForemanOtherWrap')"></select>
+            <div id="npForemanOtherWrap" class="hidden" style="margin-top:6px;"><input type="text" id="npForemanOther" placeholder="Enter name"></div>
+          </div>
+          <div><label>Est. manhours</label><input type="number" id="npMH" min="0"></div>
+          <div><label>Arrival date (ATD) *</label><input type="date" id="npAtd"></div>
+          <div><label>Original departure (ETD)</label><input type="date" id="npEtdOrig"></div>
+          <div><label>Expected departure *</label><input type="date" id="npEtdExp"></div>
+          <div class="span2"><label>Manager message to engineer</label><textarea id="npManagerMessage" rows="3" placeholder="A note for the assigned engineer — e.g. priorities, site conditions, deadlines…"></textarea></div>
+        </div>
+        <div class="field-err" id="npErr"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn primary" id="npSubmitBtn" onclick="submitNewProject()">Save project</button>
+          <button class="btn" onclick="toggleNewProjectForm(true)">Cancel</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-field"><label>Search</label><input id="indexSearch" type="text" placeholder="Project, in-charge, foreman…" oninput="renderIndex()"></div>
+        <div class="filter-field small"><label>Status</label><select id="indexStatusFilter" onchange="renderIndex()"><option value="">All status</option><option value="done">Completed</option><option value="progress">In progress</option><option value="behind">Behind</option></select></div>
+        <div class="filter-field small"><label>Priority</label><select id="indexPriorityFilter" onchange="renderIndex()"><option value="">All priority</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+        <div class="filter-field small"><label>In-charge</label><select id="indexInchargeFilter" onchange="renderIndex()"><option value="">All in-charge</option></select></div>
+        <button class="btn" onclick="clearIndexFilters()">Clear</button>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Project</th><th>In-charge</th><th>Foreman</th><th>ATD</th><th>ETD</th>
+          <th>Days</th><th>Progress</th><th>Priority</th><th>Status</th><th></th>
+        </tr></thead>
+        <tbody id="indexBody"><tr class="empty-row"><td colspan="10">Loading…</td></tr></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- SUMMARY TAB -->
+  <section id="tabSummary" class="hidden">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Summary — all projects, arranged by display order</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" onclick="loadProjects()">Refresh</button>
+          <button class="btn" onclick="exportSummaryExcel()">Download Excel</button>
+          <button class="btn" onclick="printSummary()">Print summary</button>
+          <button class="btn" id="toggleSummaryFilterBtn" onclick="toggleSummaryFilterBar()">Hide filters</button>
+        </div>
+      </div>
+      <div class="filter-bar" id="summaryFilterBar">
+        <div style="width:100%;font-size:11.5px;color:var(--muted);margin-bottom:2px;">Projects are shown in Display order. Use Ctrl/⌘ + click to select multiple values.</div>
+        <div class="summary-filter-grid">
+          <div class="filter-field filter-search"><label>Search</label><input id="summarySearch" type="text" placeholder="Location, job, remarks…" oninput="renderSummary()"></div>
+          <div class="filter-field"><label>Project <span class="filter-help">Multiple allowed</span></label><select id="summaryProjectFilter" class="summary-multi" multiple onchange="renderSummary()"></select></div>
+          <div class="filter-field"><label>In-charge <span class="filter-help">Multiple allowed</span></label><select id="summaryInchargeFilter" class="summary-multi" multiple onchange="renderSummary()"></select></div>
+          <div class="filter-field"><label>Status <span class="filter-help">Multiple allowed</span></label><select id="summaryStatusFilter" class="summary-multi" multiple onchange="renderSummary()">
+            <option value="done">Completed</option><option value="progress">In progress</option><option value="behind">Behind</option>
+          </select></div>
+          <div class="active-only-wrap"><input id="summaryActiveOnly" type="checkbox" onchange="renderSummary()"><label for="summaryActiveOnly" style="margin:0;">Active projects only</label></div>
+          <button class="btn" onclick="clearSummaryFilters()">Clear</button>
+        </div>
+      </div>
+      <div class="panel-body" id="summaryBody">Loading…</div>
+    </div>
+  </section>
+
+  <!-- PROJECT TAB -->
+  <section id="tabProject" class="hidden">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Project sheet</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="projectSelect" onchange="onSelectProject(this.value)" style="width:260px"></select>
+          <button class="btn" onclick="exportProjectExcel()">Download Excel</button>
+          <button class="btn" onclick="emailProjectData()">Email project</button>
+          <button class="btn" onclick="printProject()">Print project sheet</button>
+        </div>
+      </div>
+      <div class="meta-row" id="projectMeta"></div>
+      <div id="managerMessageBanner"></div>
+
+      <div style="padding:12px 16px;border-top:1px solid var(--line);">
+        <button class="btn primary" id="toggleJobFormBtn" onclick="toggleJobForm()">＋ Add Jobs</button>
+      </div>
+      <div class="panel-body hidden" id="taskFormWrap">
+        <div id="taskStatus"></div>
+        <div class="form-grid">
+          <div><label>Location *</label>
+            <select id="tLocation" onchange="onLocationChange()">
+              <option>Engine Room</option><option>Main Deck</option><option>Pump Room</option><option>Tank</option><option>Other</option>
+            </select>
+          </div>
+          <div id="tLocationOtherWrap" class="hidden"><label>Specify location</label><input type="text" id="tLocationOther"></div>
+          <div><label>Owner number</label><input type="text" id="tOwner" placeholder="OWN-4521"></div>
+          <div class="span2"><label>Job description *</label><input type="text" id="tJob"></div>
+          <div><label>Start date</label><input type="date" id="tStart"></div>
+          <div><label>End date</label><input type="date" id="tEnd"></div>
+          <div><label>Unit</label><select id="tUnit"><option>pcs</option><option>m</option><option>set</option><option>lot</option></select></div>
+          <div><label>Qty *</label><input type="number" id="tQty" min="0" oninput="updateProgressPreview()"></div>
+          <div><label>Removal</label><input type="number" id="tRemoval" min="0" value="0" oninput="updateProgressPreview()"></div>
+          <div><label>Fabrication / OH</label><input type="number" id="tFab" min="0" value="0" oninput="updateProgressPreview()"></div>
+          <div><label>Installation</label><input type="number" id="tInstall" min="0" value="0" oninput="updateProgressPreview()"></div>
+          <div><label>MH cal.</label><input type="number" id="tMhCal" min="0"></div>
+          <div><label>No of MH by job</label><input type="number" id="tMhJob" min="0"></div>
+          <div class="span2"><label>Remarks</label><input type="text" id="tRemarks"></div>
+          <div><label>Total progress (auto)</label><div class="progress-preview" id="tProgressPreview"><b>0%</b> — set Qty and Removal/Fab/Install</div></div>
+        </div>
+        <div class="field-err" id="taskErr"></div>
+        <div style="margin-top:12px;">
+          <button class="btn primary" id="taskSubmitBtn" onclick="submitTask()">Add job entry</button>
+        </div>
+      </div>
+
+      <div class="panel-head" style="border-top:1px solid var(--line)">
+        <h2>Job entries for this project</h2>
+        <span class="spin" id="taskRefreshNote"></span>
+      </div>
+      <div class="filter-bar">
+        <div class="project-filter-grid">
+          <div class="filter-field filter-search"><label>Search jobs</label><input id="taskSearch" type="text" placeholder="Location, owner, job, remarks…" oninput="renderTaskTable()"></div>
+          <div class="filter-field"><label>Status <span class="filter-help">Ctrl/⌘ + click for multiple</span></label><select id="taskStatusFilter" class="multi-filter" multiple onchange="renderTaskTable()"><option value="done">Completed</option><option value="progress">In progress</option><option value="behind">Behind</option><option value="cancelled">Cancelled</option></select></div>
+          <div class="filter-field"><label>Location <span class="filter-help">Multiple allowed</span></label><select id="taskLocationFilter" class="multi-filter" multiple onchange="renderTaskTable()"><option>Engine Room</option><option>Main Deck</option><option>Pump Room</option><option>Tank</option><option>Other</option></select></div>
+          <button class="btn" onclick="clearTaskFilters()">Clear filters</button>
+        </div>
+      </div>
+      <div class="project-task-wrap"><table class="project-task-table">
+        <thead><tr>
+          <th>Location</th><th>Owner #</th><th>Job description</th><th>Start</th><th>End</th>
+          <th>Qty</th><th>Removal</th><th>Fab/OH</th><th>Install</th><th>Progress</th><th>Status</th><th>MH cal</th><th>MH job</th><th>Remarks</th><th class="actions-col">Actions</th>
+        </tr></thead>
+        <tbody id="taskBody"><tr class="empty-row"><td colspan="15">Select a project</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+  </div>
+</div>
+
+<script>
+// ---------- storage helpers ----------
+// Standalone browser version: use localStorage so the HTML can actually save data
+// when opened directly. Later this layer can be replaced by SharePoint List storage
+// without changing the rest of the application.
+const STORAGE_PREFIX = 'DWP:';
+async function storeGet(key){
+  try {
+    const v = localStorage.getItem(STORAGE_PREFIX + key);
+    return v === null ? null : v;
+  } catch(e){ console.error('storage get failed', e); return null; }
+}
+async function storeSet(key, value){
+  try {
+    localStorage.setItem(STORAGE_PREFIX + key, value);
+    return true;
+  } catch(e){ console.error('storage set failed', e); alert('Could not save data in this browser. Please check browser storage permissions.'); return false; }
+}
+async function storeDelete(key){
+  try { localStorage.removeItem(STORAGE_PREFIX + key); return true; }
+  catch(e){ console.error('storage delete failed', e); return false; }
+}
+async function storeListKeys(prefix){
+  try {
+    const out=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i)||'';
+      if(k.indexOf(STORAGE_PREFIX + prefix)===0) out.push(k.slice(STORAGE_PREFIX.length));
+    }
+    return out;
+  } catch(e){ console.error('storage list failed', e); return []; }
+}
+
+function uid(){ return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,8); }
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function daysBetween(a,b){ if(!a||!b) return ''; const d=(new Date(b)-new Date(a))/86400000; return isNaN(d)?'':Math.round(d); }
+
+// ---------- data access: each project and each task is its OWN storage key ----------
+// project:{id} -> project header fields. task:{projectId}:{id} -> one job entry.
+// Because every add/edit targets a key unique to that record, two people entering
+// data at the same time -- even on the same project -- write to different keys and
+// never overwrite each other's rows.
+
+function canonicalProjectId(p){
+  // DWP Projects uses the UUID/text Project ID. Some SharePoint responses also
+  // expose the numeric list item ID as ID (for example 3). Never use that
+  // numeric item ID when a real text Project ID / SequenceNo is available.
+  const candidates = [
+    p?.ProjectID, p?.['Project ID'], p?.projectId,
+    p?.SequenceNo, p?.sequenceNo,
+    p?.ProjectID_x0020_, p?.['Project ID (Text)']
+  ];
+  for(const v of candidates){
+    if(v !== undefined && v !== null && String(v).trim() !== ''){
+      const x=String(v).trim();
+      if(!/^\d+$/.test(x)) return x;
+    }
+  }
+  for(const v of candidates){
+    if(v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+  }
+  return String(p?.ID ?? p?.id ?? uid());
+}
+
+function setLiveIndicator(status,detail){
+  const el=document.getElementById('liveBadge'); if(!el)return;
+  el.className='live-badge '+status;
+  const label=status==='live'?'Live — connected to SharePoint':status==='offline'?'Offline — showing local data only':'Checking…';
+  el.innerHTML='<span class="dot"></span>'+label;
+  if(detail) el.title=detail; else el.removeAttribute('title');
+}
+
+async function fetchAllProjects(){
+  // Prefer the SharePoint/Power Automate read endpoint when configured.
+  const apiUrl = getApiUrl();
+  if(apiUrl){
+    try{
+      const response = await fetch(apiUrl,{method:'POST',headers:{'Accept':'application/json'}});
+      const text = await response.text();
+      let data=text; try{data=JSON.parse(text);}catch(e){}
+      if(!response.ok) throw new Error('HTTP '+response.status+' — '+text.slice(0,300));
+      const rows=parseProjectsApiResponse(data);
+      console.info('DWP Get Projects — raw rows from SharePoint:', rows);
+      setLiveIndicator('live');
+      return rows.map((p,i)=>({
+        id: canonicalProjectId(p),
+        seq: Number(p['Display Order'] ?? p.DisplayOrder ?? p.displayOrder ?? p.Seq ?? p.seq) || (Number(p.SequenceNo) || (i+1)),
+        name: p['Project Name'] || p.ProjectName || p.Title || p.name || '',
+        incharge: p['In-Charge'] || p.InCharge || p.ProjectInCharge || p.incharge || '',
+        foreman: p.Foreman || p.ProjectForeman || p.foreman || '',
+        estMH: p['Estimated MH'] ?? p.EstimatedMH ?? p.estMH ?? '',
+        atd: String(p.ATD || p.atd || '').slice(0,10),
+        etdOrig: String(p['Original ETD'] || p.OriginalETD || p.etdOrig || '').slice(0,10),
+        etdExp: String(p['Expected ETD'] || p.ExpectedETD || p.etdExp || '').slice(0,10),
+        managerMessage: p['Manager Message'] || p.ManagerMessage || p.managerMessage || ''
+      })).sort((a,b)=>(Number(a.seq)||9999)-(Number(b.seq)||9999));
+    }catch(e){
+      console.warn('SharePoint project read failed; using local browser data.',e);
+      setLiveIndicator('offline', String(e && e.message || e));
+    }
+  } else {
+    setLiveIndicator('offline','No Projects API URL configured.');
+  }
+  const keys = await storeListKeys('project:');
+  const out = [];
+  for(const k of keys){
+    const raw = await storeGet(k);
+    if(raw){ try{ out.push(JSON.parse(raw)); }catch(e){} }
+  }
+  out.sort((a,b) => (Number(a.seq)||9999) - (Number(b.seq)||9999));
+  return out;
+}
+async function fetchTasksForProject(projectId){
+  const jobsUrl = getJobsApiUrl();
+  if(jobsUrl){
+    try{
+      const response = await fetch(jobsUrl,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify({ProjectID:String(projectId)})
+      });
+      const text = await response.text();
+      let data=text; try{data=JSON.parse(text);}catch(e){}
+      if(!response.ok) throw new Error('HTTP '+response.status+' — '+text.slice(0,300));
+      const rows=parseJobsApiResponse(data);
+      const remoteRows=rows.map((j,i)=>normalizeSharePointJob(j,projectId,i));
+      console.info('DWP Get Jobs:', {requestedProjectID:String(projectId), returnedRows:remoteRows.length, rows});
+      // Keep locally entered jobs while the SharePoint Create Job flow is not connected yet.
+      // This prevents a successful Get Jobs response of [] from wiping a newly entered row
+      // (including its Start/End dates) during the immediate refresh after Add Job.
+      const localKeys = await storeListKeys('task:' + projectId + ':');
+      const localRows=[];
+      for(const k of localKeys){
+        const raw=await storeGet(k);
+        if(raw){ try{ localRows.push(JSON.parse(raw)); }catch(e){} }
+      }
+      const byId=new Map(remoteRows.map(t=>[String(t.id),t]));
+      localRows.forEach(t=>{ if(!byId.has(String(t.id))) byId.set(String(t.id),t); });
+      return Array.from(byId.values()).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    }catch(e){
+      console.warn('SharePoint jobs read failed; using local browser jobs.',e);
+    }
+  }
+  const keys = await storeListKeys('task:' + projectId + ':');
+  const out = [];
+  for(const k of keys){
+    const raw = await storeGet(k);
+    if(raw){ try{ out.push(JSON.parse(raw)); }catch(e){} }
+  }
+  out.sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+  return out;
+}
+
+// ---------- roster: shared, growing lists of in-charge / foreman names ----------
+// one storage key per name (keyed by a slug of the name) so two people adding a
+// new name at the same time never clobber each other or the rest of the list.
+function slugify(s){ return String(s).trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+let inchargeRoster = [];
+let foremanRoster = [];
+
+async function fetchRoster(type){
+  const keys = await storeListKeys('roster:' + type + ':');
+  const names = [];
+  for(const k of keys){
+    const raw = await storeGet(k);
+    if(raw) names.push(raw);
+  }
+  return names;
+}
+async function loadRoster(){
+  inchargeRoster = await fetchRoster('incharge');
+  foremanRoster = await fetchRoster('foreman');
+  // backfill with any names already used on projects but not yet in the roster
+  projectsCache.forEach(p => {
+    if(p.incharge && !inchargeRoster.includes(p.incharge)) inchargeRoster.push(p.incharge);
+    if(p.foreman && !foremanRoster.includes(p.foreman)) foremanRoster.push(p.foreman);
+  });
+  inchargeRoster = [...new Set(inchargeRoster)].sort();
+  foremanRoster = [...new Set(foremanRoster)].sort();
+}
+async function addRosterName(type, name){
+  name = name.trim();
+  if(!name) return;
+  await storeSet('roster:' + type + ':' + slugify(name), name);
+}
+function populatePeopleSelect(selectId, roster, currentValue){
+  const sel = document.getElementById(selectId);
+  const options = ['<option value="">— Select —</option>']
+    .concat(roster.map(n => `<option value="${esc(n)}">${esc(n)}</option>`))
+    .concat(['<option value="__new__">+ Add new name…</option>']);
+  sel.innerHTML = options.join('');
+  sel.value = currentValue && roster.includes(currentValue) ? currentValue : (currentValue ? '__new__' : '');
+}
+function onPeopleSelect(selectId, otherWrapId){
+  const sel = document.getElementById(selectId);
+  document.getElementById(otherWrapId).classList.toggle('hidden', sel.value !== '__new__');
+}
+function resolvePeopleValue(selectId, otherInputId){
+  const sel = document.getElementById(selectId);
+  if(sel.value === '__new__') return document.getElementById(otherInputId).value.trim();
+  return sel.value;
+}
+// A job's progress is auto-generated from how Removal / Fabrication-OH / Installation
+// compare against Qty — each stage contributes an equal third, capped at 100%.
+function stageFraction(value, qty){
+  if(!qty || qty <= 0) return 0;
+  return Math.min(100, Math.max(0, (Number(value)||0) / qty * 100));
+}
+function computeTaskProgress(qty, removal, fab, install){
+  qty = Number(qty)||0;
+  const stages = [stageFraction(removal, qty), stageFraction(fab, qty), stageFraction(install, qty)];
+  return Math.round(stages.reduce((a,b)=>a+b,0) / 3);
+}
+function activeTasks(tasks){ return (tasks||[]).filter(t => !t.cancelled); }
+function computeProgress(tasks){
+  const list = activeTasks(tasks);
+  if(!list.length) return 0;
+  const sum = list.reduce((s,t)=> s + (Number(t.totalProgress)||0), 0);
+  return Math.round(sum / list.length);
+}
+function computeStatus(progress, etdExpected, cancelled, explicitStatus){
+  if(cancelled) return 'cancelled';
+  if(progress >= 100) return 'done';
+  if(explicitStatus === 'progress') return 'progress';
+  if(explicitStatus === 'behind') return 'behind';
+  if(etdExpected && todayISO() >= etdExpected) return 'behind';
+  return 'progress';
+}
+function computePriority(etdExpected){
+  if(!etdExpected) return 'low';
+  const days = daysBetween(todayISO(), etdExpected);
+  if(days === '' ) return 'low';
+  if(days <= 3) return 'high';
+  if(days <= 7) return 'medium';
+  return 'low';
+}
+function statusLabel(s){ return {done:'Completed', progress:'In progress', behind:'Behind', cancelled:'Cancelled'}[s] || s; }
+function priorityLabel(p){ return {high:'High', medium:'Medium', low:'Low'}[p] || p; }
+function chip(cls,label){ return `<span class="chip ${cls}">${esc(label)}</span>`; }
+function bar(progress){
+  const cls = progress >= 70 ? 'high' : progress <= 25 ? 'low' : '';
+  return `<span class="bar-track"><span class="bar-fill ${cls}" style="width:${progress}%"></span></span>${progress}%`;
+}
+
+// ---------- access / login ----------
+let currentUserRole = null;
+let currentUserName = '';
+function isManagement(){ return currentUserRole === 'management'; }
+function isEngineer(){ return currentUserRole === 'engineer'; }
+function currentEngineerOwnsProject(p){ return isEngineer() && p && String(p.incharge||'').trim().toLowerCase() === String(currentUserName||'').trim().toLowerCase(); }
+function canEditProject(p){ return isManagement() || currentEngineerOwnsProject(p); }
+function canEditTask(){ const p=projectsCache.find(x=>x.id===selectedProjectId); return isManagement() || currentEngineerOwnsProject(p); }
+function togglePasswordPanel(){
+  const p = document.getElementById('passwordPanel');
+  if(p) p.classList.toggle('hidden');
+}
+function getManagementPassword(){
+  return localStorage.getItem('dwp_mgmt_password') || 'admin';
+}
+function saveNewPassword(){
+  const cur = (document.getElementById('pwdCurrent').value || '').trim();
+  const n1 = (document.getElementById('pwdNew').value || '').trim();
+  const n2 = (document.getElementById('pwdConfirm').value || '').trim();
+  const fb = document.getElementById('pwdFeedback');
+  const stored = getManagementPassword();
+  const curValid = (cur === stored) || (stored === 'admin' && (cur === 'admin' || cur === 'admin123'));
+  if(!curValid){
+    fb.style.display = 'block'; fb.style.color = 'var(--red)';
+    fb.textContent = 'Current password incorrect.';
+    return;
+  }
+  if(n1.length < 4){
+    fb.style.display = 'block'; fb.style.color = 'var(--red)';
+    fb.textContent = 'New password must be at least 4 characters.';
+    return;
+  }
+  if(n1 !== n2){
+    fb.style.display = 'block'; fb.style.color = 'var(--red)';
+    fb.textContent = 'New passwords do not match.';
+    return;
+  }
+  localStorage.setItem('dwp_mgmt_password', n1);
+  fb.style.display = 'block'; fb.style.color = 'var(--teal)';
+  fb.textContent = 'Password successfully updated!';
+  document.getElementById('pwdCurrent').value = '';
+  document.getElementById('pwdNew').value = '';
+  document.getElementById('pwdConfirm').value = '';
+  setTimeout(() => { if(fb) fb.style.display = 'none'; }, 3000);
+}
+function resetPasswordDefault(){
+  if(!confirm('Reset management password to default "admin"?')) return;
+  localStorage.setItem('dwp_mgmt_password', 'admin');
+  const fb = document.getElementById('pwdFeedback');
+  fb.style.display = 'block'; fb.style.color = 'var(--teal)';
+  fb.textContent = 'Password reset to default "admin".';
+  setTimeout(() => { if(fb) fb.style.display = 'none'; }, 3000);
+}
+function selectLoginRole(role){
+  document.getElementById('loginManagementBtn').classList.toggle('active',role==='management');
+  document.getElementById('loginEngineerBtn').classList.toggle('active',role==='engineer');
+  document.getElementById('engineerLoginWrap').classList.toggle('hidden',role!=='engineer');
+  const mgmtWrap = document.getElementById('managementLoginWrap');
+  if(mgmtWrap) mgmtWrap.classList.toggle('hidden', role!=='management');
+  const err = document.getElementById('loginPasswordError');
+  if(err) err.style.display = 'none';
+  document.getElementById('loginOverlay').dataset.role=role;
+}
+function populateEngineerLogin(){
+  const sel=document.getElementById('engineerLoginName'); if(!sel)return;
+  const names=[...new Set(inchargeRoster.filter(Boolean))].sort();
+  sel.innerHTML='<option value="">— Select engineer —</option>'+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+}
+function loginUser(){
+  const role=document.getElementById('loginOverlay').dataset.role||'management';
+  if(role==='management'){
+    const pwdInput = document.getElementById('managementLoginPassword');
+    const pwd = (pwdInput ? pwdInput.value : '').trim();
+    const stored = getManagementPassword();
+    const isValid = (pwd === stored) || (stored === 'admin' && (pwd === 'admin' || pwd === 'admin123'));
+    const err = document.getElementById('loginPasswordError');
+    if(!isValid){
+      if(err){ err.textContent = 'Incorrect password. Default is admin.'; err.style.display = 'block'; }
+      else { alert('Incorrect password. Default is admin.'); }
+      return;
+    }
+    if(err) err.style.display = 'none';
+    if(pwdInput) pwdInput.value = '';
+    currentUserName='Management';
+  } else if(role==='engineer'){
+    const name=document.getElementById('engineerLoginName').value;
+    if(!name){alert('Please select your engineer name.');return;}
+    currentUserName=name;
+  }
+  currentUserRole=role; document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('sideUser').textContent=currentUserName;
+  document.getElementById('roleBadge').textContent=role==='management'?'Management':'Engineer — '+currentUserName;
+  document.querySelectorAll('.management-only').forEach(el=>el.classList.toggle('hidden',!isManagement()));
+  renderIndex(); renderSummary(); loadProjectSelector();
+}
+function logoutUser(){ currentUserRole=null; currentUserName=''; selectedProjectId=null; selectLoginRole('management'); document.getElementById('loginOverlay').classList.remove('hidden'); }
+
+// ---------- tabs ----------
+let currentTab = 'dashboard';
+function switchTab(tab){
+  currentTab = tab;
+  ['Dashboard','Index','Summary','Project'].forEach(t => {
+    document.getElementById('tab'+t).classList.toggle('hidden', t.toLowerCase() !== tab);
+    document.getElementById('tabBtn'+t).classList.toggle('active', t.toLowerCase() === tab);
+  });
+  if(tab === 'dashboard') loadProjects();
+  if(tab === 'index') loadProjects();
+  if(tab === 'summary'){ loadProjects().then(()=>loadAllVisibleJobsForSummary()); }
+  if(tab === 'project') loadProjectSelector();
+}
+
+// ---------- Power Automate / SharePoint API test ----------
+// ============================================================
+// EDIT HERE IF A URL EVER NEEDS TO CHANGE.
+// Open this file in Notepad (or any text editor), replace the
+// URL text between the quotes below for the one that changed,
+// save the file, and re-share it. That's the only step needed —
+// there is no in-app way to paste or override these URLs anymore.
+// Treat this file as internal: these trigger URLs contain secret signatures.
+// ============================================================
+const DEFAULT_PROJECTS_API_URL = 'https://defaulte1db4b0fa7714773a87bf2bada9d03.c6.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/00/workflows/d7b2295325124cbcaf87bdcc93d85c49/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Bwc2ZEh3fZ3mMHJskYUyAVt0NQCyjhHGSey37RH8Rq0';
+const DEFAULT_JOBS_API_URL = 'https://defaulte1db4b0fa7714773a87bf2bada9d03.c6.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/25/workflows/9f54ae5d368240ee8a5ee703d4c4d820/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=LnuVu6OZzq1tcZ8YC0Z1wijsJiq7jnvQLXcZN6Givqc';
+const DEFAULT_CREATE_JOB_API_URL = 'https://defaulte1db4b0fa7714773a87bf2bada9d03.c6.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/31/workflows/d3c5713297934f3e83b6e3035feb23c9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=s5LOAVrTerDw_flnxKOkj3P8hdY1Nvi0QuCoR5JO7lo';
+const UPDATE_JOB_API_URL = 'https://defaulte1db4b0fa7714773a87bf2bada9d03.c6.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/21/workflows/1509adae9c6a46ae9028b63fb27dbc9a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=FwP058dhDQK5i7QBmU2vL-nrM_DxmYM0ccPkDqHSTzA';
+const CREATE_PROJECT_API_URL = 'https://defaulte1db4b0fa7714773a87bf2bada9d03.c6.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/03/workflows/ae744768599a4a6f9cf2402416f5d66f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RqtsDb8ZDdshSsKL7XVKZcPAwYixa1PZN1-bbqgA8yI';
+function getApiUrl(){ return DEFAULT_PROJECTS_API_URL; }
+function getJobsApiUrl(){ return DEFAULT_JOBS_API_URL; }
+function getCreateJobApiUrl(){ return DEFAULT_CREATE_JOB_API_URL; }
+function toggleApiPanel(){
+  const panel=document.getElementById('apiPanel');
+  if(!panel) return;
+  panel.classList.toggle('hidden');
+}
+function setApiStatus(text,type){
+  const el=document.getElementById('apiStatus'); if(!el)return;
+  el.textContent=text; el.style.borderColor=type==='ok'?'var(--teal)':type==='bad'?'var(--red)':'var(--line)';
+  el.style.color=type==='ok'?'var(--teal)':type==='bad'?'var(--red)':'var(--muted)';
+}
+function parseProjectsApiResponse(data){
+  let value=data;
+  if(data && typeof data==='object'){
+    if(Object.prototype.hasOwnProperty.call(data,'ProjectsJSON')) value=data.ProjectsJSON;
+    else if(Object.prototype.hasOwnProperty.call(data,'projectsjson')) value=data.projectsjson;
+    else if(data.body && typeof data.body==='object'){
+      if(Object.prototype.hasOwnProperty.call(data.body,'ProjectsJSON')) value=data.body.ProjectsJSON;
+      else if(Object.prototype.hasOwnProperty.call(data.body,'projectsjson')) value=data.body.projectsjson;
+    }
+  }
+  if(typeof value==='string'){
+    try{value=JSON.parse(value);}catch(e){
+      const start=value.indexOf('['), end=value.lastIndexOf(']');
+      if(start>=0 && end>start){try{value=JSON.parse(value.slice(start,end+1));}catch(ignore){}}
+    }
+  }
+  return Array.isArray(value)?value:[];
+}
+function parseJobsApiResponse(data){
+  let value=data;
+  if(data && typeof data==='object'){
+    if(Object.prototype.hasOwnProperty.call(data,'JobsJSON')) value=data.JobsJSON;
+    else if(Object.prototype.hasOwnProperty.call(data,'jobsjson')) value=data.jobsjson;
+    else if(data.body && typeof data.body==='object'){
+      if(Object.prototype.hasOwnProperty.call(data.body,'JobsJSON')) value=data.body.JobsJSON;
+      else if(Object.prototype.hasOwnProperty.call(data.body,'jobsjson')) value=data.body.jobsjson;
+    }
+  }
+  if(typeof value==='string'){
+    try{value=JSON.parse(value);}catch(e){
+      const start=value.indexOf('['), end=value.lastIndexOf(']');
+      if(start>=0 && end>start){try{value=JSON.parse(value.slice(start,end+1));}catch(ignore){}}
+    }
+  }
+  return Array.isArray(value)?value:[];
+}
+function normalizeSharePointJob(j,projectId,i){
+  const statusValue = j?.Status && typeof j.Status==='object' ? j.Status.Value : j?.Status;
+  const progress = Number(j.TotalProgress ?? j['Total Progress'] ?? j.totalProgress ?? 0) || 0;
+  return {
+    id:String(j.JobID ?? j['Job ID'] ?? j.ID ?? ('sp-'+projectId+'-'+i)),
+    sharePointId:(j.ID ?? j.Id ?? j.SharePointID ?? j['SharePoint ID'] ?? ''),
+    projectId:String(j.ProjectID ?? j['Project ID'] ?? j.SequenceNo ?? projectId),
+    location:j.Location || '',
+    locationOther:'',
+    owner:(j['OwnerNo_x002e_'] ?? j['Owner No.'] ?? j.OwnerNo ?? j.Owner ?? ''),
+    job:j.Title ?? j['Job Description'] ?? '',
+    start:String(j.Start || '').slice(0,10),
+    end:String(j.End || '').slice(0,10),
+    unit:j.Unit || '',
+    qty:Number(j.Qty)||0,
+    removal:Number(j.Removal)||0,
+    fab:Number(j['Fab_x002f_OH'] ?? j['Fab/OH'] ?? j.FabOH)||0,
+    install:Number(j.Install)||0,
+    totalProgress:progress || computeTaskProgress(Number(j.Qty)||0,Number(j.Removal)||0,Number(j['Fab_x002f_OH'] ?? j['Fab/OH'] ?? j.FabOH)||0,Number(j.Install)||0),
+    status:String(statusValue || 'In Progress').toLowerCase().replace(/\s+/g,' ')==='cancelled'?'cancelled':(String(statusValue || 'In Progress').toLowerCase()==='completed'?'done':String(statusValue || 'In Progress').toLowerCase()==='behind'?'behind':'progress'),
+    cancelled:String(statusValue || '').toLowerCase()==='cancelled',
+    mhCal:j['MH cal'] ?? j.MHcal ?? j.MHCal ?? '',
+    mhJob:j['MH job'] ?? j.MHjob ?? j.MHJob ?? '',
+    remarks:j.Remarks ?? '',
+    createdAt:new Date(j.Created || 0).getTime() || i
+  };
+}
+async function testPowerAutomateProjects(){
+  const url=getApiUrl();
+  const result=document.getElementById('apiResult');
+  if(!url){alert('Please save the Power Automate HTTP POST URL first.');return;}
+  setApiStatus('Testing…','progress');
+  result.textContent='Sending request…';
+  try{
+    const response=await fetch(url,{method:'POST',headers:{'Accept':'application/json'}});
+    const text=await response.text();
+    let data=text; try{data=JSON.parse(text);}catch(e){}
+    if(!response.ok) throw new Error('HTTP '+response.status+' — '+text.slice(0,500));
+    const projects=parseProjectsApiResponse(data);
+    setApiStatus('Connected ✓','ok');
+    const sample=projects.slice(0,5).map((p,i)=>`${i+1}. ${p['Project Name']||p.ProjectName||p.Title||p.name||'(unnamed project)'} — order ${p['Display Order']||p.DisplayOrder||p.displayOrder||p.SequenceNo||'auto'}`).join('<br>');
+    result.innerHTML='<b style="color:var(--teal)">Success.</b> Power Automate responded and SharePoint DWP Projects returned <b>'+projects.length+'</b> item(s).'+(sample?'<div style="margin-top:6px">'+sample+'</div>':'');
+  }catch(e){
+    setApiStatus('Connection failed','bad');
+    result.innerHTML='<b style="color:var(--red)">Connection failed.</b> '+esc(e.message||String(e))+'<div style="margin-top:6px;color:var(--muted)">If the flow succeeds in Power Automate but the browser reports a CORS/network error, we will handle that in the next integration step.</div>';
+  }
+}
+
+// ---------- INDEX ----------
+let projectsCache = [];
+
+async function loadProjects(){
+  projectsCache = await fetchAllProjects();
+  await loadRoster();
+  populateEngineerLogin();
+  // Performance: do not call Power Automate once for every project during startup.
+  // Jobs are loaded only when the user opens/selects a project.
+  for(const p of projectsCache){
+    p._tasks = [];
+    p._progress = 0;
+    p._status = computeStatus(0, p.etdExp);
+    p._priority = computePriority(p.etdExp);
+    p._daysToAtd = daysBetween(todayISO(), p.atd);
+    p._daysToEtd = daysBetween(todayISO(), p.etdExp);
+  }
+  renderIndex();
+  renderSummary();
+  renderDashboard();
+}
+
+function renderDashboard(){
+  const total = projectsCache.length;
+  const done = projectsCache.filter(p=>p._status==='done').length;
+  const inprog = projectsCache.filter(p=>p._status==='progress').length;
+  const behind = projectsCache.filter(p=>p._status==='behind').length;
+  document.getElementById('dashMetrics').innerHTML = `
+    <div class="metric"><div class="label">Total projects</div><div class="value">${total}</div></div>
+    <div class="metric done"><div class="label">Completed</div><div class="value">${done}</div></div>
+    <div class="metric progress"><div class="label">In progress</div><div class="value">${inprog}</div></div>
+    <div class="metric behind"><div class="label">Behind</div><div class="value">${behind}</div></div>`;
+
+  // progress chart — one horizontal bar per project, worst progress first
+  const sorted = [...projectsCache].sort((a,b) => a._progress - b._progress);
+  const chartEl = document.getElementById('chartProgress');
+  chartEl.innerHTML = sorted.length ? sorted.map(p => {
+    const color = p._status === 'done' ? 'var(--teal)' : p._status === 'behind' ? 'var(--red)' : 'var(--navy-2)';
+    return `<div class="chart-row" title="${esc(p.name)}">
+      <span class="name">${esc(p.name)}</span>
+      <span class="track"><span class="fill" style="width:${p._progress}%;background:${color}">${p._progress > 12 ? p._progress+'%' : ''}</span></span>
+    </div>`;
+  }).join('') : '<p style="color:var(--text-mute);font-size:13px;">No projects yet.</p>';
+
+  // in-charge workload
+  const byIncharge = {};
+  projectsCache.forEach(p => {
+    const name = (p.incharge || 'Unassigned').trim() || 'Unassigned';
+    if(!byIncharge[name]) byIncharge[name] = {running:0, completed:0, upcoming:0, total:0};
+    byIncharge[name].total++;
+    if(p._status === 'done') byIncharge[name].completed++;
+    else if(p._daysToAtd !== '' && p._daysToAtd > 0) byIncharge[name].upcoming++;
+    else byIncharge[name].running++;
+  });
+  const inchargeRows = Object.keys(byIncharge).sort().map(name => {
+    const w = byIncharge[name];
+    return `<tr><td>${esc(name)}</td><td>${w.running}</td><td>${w.completed}</td><td>${w.upcoming}</td><td>${w.total}</td></tr>`;
+  }).join('');
+  document.getElementById('inchargeBody').innerHTML = inchargeRows || '<tr class="empty-row"><td colspan="5">No projects yet.</td></tr>';
+
+  // upcoming (not yet arrived): ATD in the future
+  const upcoming = projectsCache.filter(p => p._daysToAtd !== '' && p._daysToAtd > 0)
+    .sort((a,b) => a._daysToAtd - b._daysToAtd);
+  document.getElementById('upcomingList').innerHTML = upcoming.length ? upcoming.map(p => `
+    <div class="mini-row">
+      <span class="who">${esc(p.name)} <span style="color:var(--text-mute)">· ${esc(p.incharge||'—')}</span></span>
+      <span class="when">Arrives in ${p._daysToAtd} day${p._daysToAtd===1?'':'s'} (${esc(p.atd)})</span>
+    </div>`).join('') : '<p style="color:var(--text-mute);font-size:13px;">No upcoming arrivals.</p>';
+
+  // sailing out soon: ETD within next 7 days, not yet completed/departed
+  const sailout = projectsCache.filter(p => p._status !== 'done' && p._daysToEtd !== '' && p._daysToEtd >= 0 && p._daysToEtd <= 7)
+    .sort((a,b) => a._daysToEtd - b._daysToEtd);
+  document.getElementById('sailoutList').innerHTML = sailout.length ? sailout.map(p => {
+    const dotColor = p._daysToEtd <= 2 ? 'var(--red)' : 'var(--amber)';
+    return `<div class="mini-row">
+      <span class="who"><span class="urgent-dot" style="background:${dotColor}"></span>${esc(p.name)} <span style="color:var(--text-mute)">· ${esc(p.incharge||'—')}</span></span>
+      <span class="when">${p._daysToEtd===0?'Today':'In '+p._daysToEtd+' day'+(p._daysToEtd===1?'':'s')} (${esc(p.etdExp)}) · ${p._progress}%</span>
+    </div>`;
+  }).join('') : '<p style="color:var(--text-mute);font-size:13px;">Nothing sailing out in the next 7 days.</p>';
+}
+
+function updateIndexInchargeFilter(){
+  const sel=document.getElementById('indexInchargeFilter'); if(!sel)return; const cur=sel.value;
+  const names=[...new Set(projectsCache.map(p=>p.incharge).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">All in-charge</option>'+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join(''); if(names.includes(cur))sel.value=cur;
+}
+function clearIndexFilters(){['indexSearch','indexStatusFilter','indexPriorityFilter'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const e=document.getElementById('indexInchargeFilter');if(e)e.value='';renderIndex();}
+function renderIndex(){
+  updateIndexInchargeFilter(); const body=document.getElementById('indexBody');
+  const q=(document.getElementById('indexSearch')?.value||'').trim().toLowerCase(), sf=document.getElementById('indexStatusFilter')?.value||'', pf=document.getElementById('indexPriorityFilter')?.value||'', inf=document.getElementById('indexInchargeFilter')?.value||'';
+  const visible=projectsCache.filter(p=>{if(isEngineer()&&!currentEngineerOwnsProject(p))return false;if(sf&&p._status!==sf)return false;if(pf&&p._priority!==pf)return false;if(inf&&p.incharge!==inf)return false;if(q&&!([p.seq,p.name,p.incharge,p.foreman,p.atd,p.etdExp].join(' ').toLowerCase().includes(q)))return false;return true;});
+  body.innerHTML=visible.length?visible.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.incharge)}</td><td>${esc(p.foreman)}</td><td>${esc(p.atd)}</td><td>${esc(p.etdExp)}</td><td>${daysBetween(p.atd,p.etdExp)}</td><td>${bar(p._progress)}</td><td>${chip(p._priority,priorityLabel(p._priority))}</td><td>${chip(p._status,statusLabel(p._status))}</td><td style="white-space:nowrap"><button class="link-btn" onclick='openProject(${JSON.stringify(p.id)})'>Open</button>${isManagement()?` · <button class="link-btn" onclick='editProject(${JSON.stringify(p.id)})'>Edit</button> · <button class="link-btn" style="color:var(--red)" onclick='deleteProject(${JSON.stringify(p.id)},${JSON.stringify(p.name||'')})'>Delete</button>`:''}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="10">No projects match the current filters.</td></tr>';
+  const pool=isEngineer()?projectsCache.filter(currentEngineerOwnsProject):projectsCache; const total=pool.length,done=pool.filter(p=>p._status==='done').length,inprog=pool.filter(p=>p._status==='progress').length,behind=pool.filter(p=>p._status==='behind').length;
+  document.getElementById('indexMetrics').innerHTML=`<div class="metric"><div class="label">Total projects</div><div class="value">${total}</div></div><div class="metric done"><div class="label">Completed</div><div class="value">${done}</div></div><div class="metric progress"><div class="label">In progress</div><div class="value">${inprog}</div></div><div class="metric behind"><div class="label">Behind</div><div class="value">${behind}</div></div>`;
+}
+
+// Summary: every project's full job list, grouped by project, in sequence order.
+function getMultiValues(id){
+  return Array.from(document.getElementById(id)?.selectedOptions||[]).map(o=>o.value).filter(Boolean);
+}
+function updateSummaryFilters(){
+  const pf=document.getElementById('summaryProjectFilter'),
+        inf=document.getElementById('summaryInchargeFilter'),
+        sf=document.getElementById('summaryStatusFilter');
+  if(!pf||!inf||!sf)return;
+
+  const pool=isEngineer()?projectsCache.filter(currentEngineerOwnsProject):projectsCache;
+  const oldP=getMultiValues('summaryProjectFilter');
+  const oldI=getMultiValues('summaryInchargeFilter');
+  const oldS=getMultiValues('summaryStatusFilter');
+
+  pf.innerHTML=pool.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+  inf.innerHTML=[...new Set(pool.map(p=>p.incharge).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+
+  const validStatuses=['done','progress','behind'];
+  Array.from(sf.options).forEach(o=>o.selected=oldS.includes(o.value));
+  Array.from(pf.options).forEach(o=>o.selected=oldP.includes(o.value));
+  Array.from(inf.options).forEach(o=>o.selected=oldI.includes(o.value));
+}
+function toggleSummaryFilterBar(){
+  const bar=document.getElementById('summaryFilterBar'),btn=document.getElementById('toggleSummaryFilterBtn');
+  if(!bar||!btn) return;
+  const hidden=bar.classList.toggle('hidden');
+  btn.textContent=hidden?'Show filters':'Hide filters';
+  try{localStorage.setItem(STORAGE_PREFIX+'summaryFiltersHidden',hidden?'1':'0');}catch(e){}
+}
+function initSummaryFilterBarState(){
+  const bar=document.getElementById('summaryFilterBar'),btn=document.getElementById('toggleSummaryFilterBtn');
+  if(!bar||!btn) return;
+  let hidden=false;
+  try{hidden=localStorage.getItem(STORAGE_PREFIX+'summaryFiltersHidden')==='1';}catch(e){}
+  bar.classList.toggle('hidden',hidden);
+  btn.textContent=hidden?'Show filters':'Hide filters';
+}
+function clearSummaryFilters(){
+  const s=document.getElementById('summarySearch'); if(s)s.value='';
+  ['summaryProjectFilter','summaryInchargeFilter','summaryStatusFilter'].forEach(id=>{
+    Array.from(document.getElementById(id)?.options||[]).forEach(o=>o.selected=false);
+  });
+  const a=document.getElementById('summaryActiveOnly'); if(a)a.checked=false;
+  renderSummary();
+}
+let summaryLoadToken = 0;
+async function loadAllVisibleJobsForSummary(){
+  const token=++summaryLoadToken;
+  const pool=isEngineer()?projectsCache.filter(currentEngineerOwnsProject):projectsCache;
+  if(!pool.length){ renderSummary(); return; }
+  const wrap=document.getElementById('summaryBody');
+  if(wrap) wrap.innerHTML='<p style="color:var(--text-mute);font-size:13px;">Loading job data from SharePoint…</p>';
+  // Load only when Summary is opened, so normal startup remains fast.
+  for(const p of pool){
+    if(token!==summaryLoadToken) return;
+    try{
+      const tasks=await fetchTasksForProject(p.id);
+      p._tasks=tasks;
+      p._progress=computeProgress(tasks);
+      p._status=computeStatus(p._progress,p.etdExp);
+    }catch(e){ console.warn('Summary jobs load failed for '+p.id,e); }
+  }
+  if(token===summaryLoadToken){ renderSummary(); renderIndex(); renderDashboard(); }
+}
+
+function renderSummary(){
+  const wrap=document.getElementById('summaryBody');
+  updateSummaryFilters();
+
+  const q=(document.getElementById('summarySearch')?.value||'').trim().toLowerCase();
+  const selectedProjects=getMultiValues('summaryProjectFilter');
+  const selectedIncharges=getMultiValues('summaryInchargeFilter');
+  const selectedStatuses=getMultiValues('summaryStatusFilter');
+  const activeOnly=!!document.getElementById('summaryActiveOnly')?.checked;
+
+  const basePool=isEngineer()?projectsCache.filter(currentEngineerOwnsProject):projectsCache;
+  const pool=basePool.filter(p=>{
+    if(selectedProjects.length && !selectedProjects.includes(String(p.id))) return false;
+    if(selectedIncharges.length && !selectedIncharges.includes(String(p.incharge||''))) return false;
+    // "Active projects" means the project itself is not Completed.
+    if(activeOnly && p._status==='done') return false;
+    if(selectedStatuses.length && !selectedStatuses.includes(String(p._status||''))) return false;
+    return true;
+  });
+
+  let groups=0;
+  wrap.innerHTML=pool.map(p=>{
+    const tasks=activeTasks(p._tasks||[]).filter(t=>{
+      const st=computeStatus(Number(t.totalProgress)||0,t.end,t.cancelled);
+      if(selectedStatuses.length && !selectedStatuses.includes(st)) return false;
+      if(q&&!([t.location,t.locationOther,t.owner,t.job,t.start,t.end,t.remarks].join(' ').toLowerCase().includes(q))) return false;
+      return true;
+    });
+    if(!tasks.length)return '';
+    groups++;
+
+    const rows=tasks.map(t=>{
+      const st=computeStatus(Number(t.totalProgress)||0,t.end,t.cancelled);
+      return `<tr><td>${esc(t.location==='Other'?(t.locationOther||'Other'):t.location)}</td><td>${esc(t.job)}</td><td>${esc(t.start)}</td><td>${esc(t.end)}</td><td>${Number(t.qty)||0}</td><td>${Number(t.removal)||0}</td><td>${Number(t.fab)||0}</td><td>${Number(t.install)||0}</td><td>${bar(Number(t.totalProgress)||0)}</td><td>${chip(st,statusLabel(st))}</td><td>${esc(t.remarks)}</td></tr>`;
+    }).join('');
+
+    return `<div class="summary-group"><div class="summary-group-head"><div><div class="title">${esc(p.name)}</div><div class="sub">${esc(p.incharge||'—')} · ${esc(p.foreman||'—')} · ETD ${esc(p.etdExp||'—')}</div></div><div class="meta">${chip(p._priority,priorityLabel(p._priority))}${chip(p._status,statusLabel(p._status))}${bar(p._progress)}</div></div><table><thead><tr><th>Location</th><th>Job description</th><th>Start</th><th>End</th><th>Qty</th><th>Removal</th><th>Fab/OH</th><th>Install</th><th>Progress</th><th>Status</th><th>Remarks</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }).join('');
+
+  if(!groups)wrap.innerHTML='<p style="color:var(--text-mute);font-size:13px;">No job entries match the current filters.</p>';
+}
+
+let editingProjectId = null;
+
+function openNewProjectForm(){
+  if(!isManagement()){alert('Only Management can create projects.');return;}
+  editingProjectId = null;
+  document.getElementById('npFormTitle').textContent = 'New project';
+  document.getElementById('npSubmitBtn').textContent = 'Save project';
+  ['npSeq','npName','npMH','npAtd','npEtdOrig','npEtdExp','npManagerMessage'].forEach(id2 => document.getElementById(id2).value = '');
+  document.getElementById('npSeq').value = String((projectsCache.reduce((m,p)=>Math.max(m,Number(p.seq)||0),0))+1);
+  populatePeopleSelect('npIncharge', inchargeRoster, '');
+  populatePeopleSelect('npForeman', foremanRoster, '');
+  document.getElementById('npInchargeOtherWrap').classList.add('hidden');
+  document.getElementById('npForemanOtherWrap').classList.add('hidden');
+  document.getElementById('newProjectStatus').innerHTML = '';
+  document.getElementById('newProjectFormWrap').classList.remove('hidden');
+}
+
+function editProject(id){
+  if(!isManagement()){alert('Only Management can edit project headers.');return;}
+  const p = projectsCache.find(x => x.id === id);
+  if(!p) return;
+  if(isEngineer() && !currentEngineerOwnsProject(p)){ alert('You can only open projects assigned to you.'); return; }
+  editingProjectId = id;
+  document.getElementById('npFormTitle').textContent = 'Edit project — ' + p.name;
+  document.getElementById('npSubmitBtn').textContent = 'Save changes';
+  document.getElementById('npSeq').value = p.seq || '';
+  document.getElementById('npName').value = p.name || '';
+  document.getElementById('npMH').value = p.estMH || '';
+  document.getElementById('npAtd').value = p.atd || '';
+  document.getElementById('npEtdOrig').value = p.etdOrig || '';
+  document.getElementById('npEtdExp').value = p.etdExp || '';
+  document.getElementById('npManagerMessage').value = p.managerMessage || '';
+  populatePeopleSelect('npIncharge', inchargeRoster, p.incharge);
+  populatePeopleSelect('npForeman', foremanRoster, p.foreman);
+  document.getElementById('npInchargeOtherWrap').classList.toggle('hidden', document.getElementById('npIncharge').value !== '__new__');
+  document.getElementById('npForemanOtherWrap').classList.toggle('hidden', document.getElementById('npForeman').value !== '__new__');
+  if(document.getElementById('npIncharge').value === '__new__') document.getElementById('npInchargeOther').value = p.incharge || '';
+  if(document.getElementById('npForeman').value === '__new__') document.getElementById('npForemanOther').value = p.foreman || '';
+  document.getElementById('newProjectStatus').innerHTML = '';
+  document.getElementById('newProjectFormWrap').classList.remove('hidden');
+  document.getElementById('newProjectFormWrap').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function toggleNewProjectForm(forceClose){
+  const wrap = document.getElementById('newProjectFormWrap');
+  if(forceClose) wrap.classList.add('hidden');
+  else wrap.classList.toggle('hidden');
+  editingProjectId = null;
+}
+
+async function submitNewProject(){
+  const name = document.getElementById('npName').value.trim();
+  const atd = document.getElementById('npAtd').value;
+  const etdExp = document.getElementById('npEtdExp').value;
+  const incharge = resolvePeopleValue('npIncharge','npInchargeOther');
+  const foreman = resolvePeopleValue('npForeman','npForemanOther');
+  const errEl = document.getElementById('npErr');
+  if(!name || !atd || !etdExp){
+    errEl.textContent = 'Project name, arrival date, and expected departure are required.';
+    errEl.classList.add('show');
+    return;
+  }
+  errEl.classList.remove('show');
+  const btn = document.getElementById('npSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const id = editingProjectId || uid();
+  const project = {
+    id, seq: document.getElementById('npSeq').value || '',
+    name, incharge, foreman,
+    estMH: document.getElementById('npMH').value || '',
+    atd, etdOrig: document.getElementById('npEtdOrig').value || '', etdExp,
+    managerMessage: document.getElementById('npManagerMessage').value.trim()
+  };
+  const statusEl = document.getElementById('newProjectStatus');
+
+  // New projects are sent to SharePoint through the Create Project flow. DisplayOrder should be mapped to the SharePoint Display Order column.
+  // Editing still uses the browser store until the Update Project flow is added.
+  if(!editingProjectId){
+    try{
+      const createPayload = {
+        ProjectName: project.name,
+        ProjectID: project.id,
+        DisplayOrder: project.seq === '' ? null : Number(project.seq),
+        InCharge: project.incharge,
+        Foreman: project.foreman,
+        EstimatedMH: project.estMH === '' ? null : Number(project.estMH),
+        ATD: project.atd,
+        OriginalETD: project.etdOrig || null,
+        ExpectedETD: project.etdExp,
+        ManagerMessage: project.managerMessage || ''
+      };
+      console.info('DWP Create Project — payload sent:', createPayload);
+      const response = await fetch(CREATE_PROJECT_API_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify(createPayload)
+      });
+      const text = await response.text();
+      console.info('DWP Create Project — response:', response.status, text);
+      if(!response.ok) throw new Error('HTTP '+response.status+' — '+text.slice(0,400));
+      await Promise.all([addRosterName('incharge', incharge), addRosterName('foreman', foreman)]);
+      statusEl.innerHTML = '<div class="status-banner ok">Project created successfully in SharePoint.</div>';
+      await loadProjects();
+      setTimeout(() => { statusEl.innerHTML=''; toggleNewProjectForm(true); }, 1200);
+    }catch(e){
+      console.error('Create project failed',e);
+      statusEl.innerHTML = '<div class="status-banner err">Could not create project in SharePoint: '+esc(e.message||String(e))+'</div>';
+    }
+  } else {
+    const ok = await storeSet('project:' + id, JSON.stringify(project));
+    if(ok){
+      await Promise.all([addRosterName('incharge', incharge), addRosterName('foreman', foreman)]);
+      statusEl.innerHTML = '<div class="status-banner ok">Changes saved locally. SharePoint update flow will be connected next.</div>';
+      await loadProjects();
+      setTimeout(() => { statusEl.innerHTML=''; toggleNewProjectForm(true); }, 1200);
+    } else {
+      statusEl.innerHTML = '<div class="status-banner err">Could not save — try again.</div>';
+    }
+  }
+  btn.disabled = false; btn.textContent = editingProjectId ? 'Save changes' : 'Save project';
+}
+
+async function deleteProject(id, name){
+  if(!isManagement()){alert('Only Management can delete projects from the Index.');return;}
+  if(!confirm('Delete "' + name + '" and all its job entries? This cannot be undone.')) return;
+  const taskKeys = await storeListKeys('task:' + id + ':');
+  for(const k of taskKeys) await storeDelete(k);
+  await storeDelete('project:' + id);
+  await loadProjects();
+  if(currentTab === 'project') loadProjectSelector();
+}
+
+function openProject(id){
+  switchTab('project');
+  document.getElementById('tabBtnIndex').classList.remove('active');
+  document.getElementById('tabBtnProject').classList.add('active');
+  setTimeout(() => {
+    const sel = document.getElementById('projectSelect');
+    sel.value = id;
+    onSelectProject(id);
+  }, 50);
+}
+
+// ---------- PROJECT TAB ----------
+let selectedProjectId = null;
+let projectLoadToken = 0;
+let pollTimer = null;
+let tasksCache = [];
+let editingTaskId = null;
+
+async function loadProjectSelector(){
+  if(!projectsCache.length)projectsCache=await fetchAllProjects();const sel=document.getElementById('projectSelect'),prev=selectedProjectId,pool=isEngineer()?projectsCache.filter(currentEngineerOwnsProject):projectsCache;
+  sel.innerHTML=pool.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');if(!pool.length){document.getElementById('projectMeta').innerHTML='<span>No projects assigned to you yet.</span>';document.getElementById('managerMessageBanner').innerHTML='';document.getElementById('taskBody').innerHTML='<tr class="empty-row"><td colspan="15">No projects available.</td></tr>';return;}const id=prev&&pool.some(p=>p.id===prev)?prev:pool[0].id;sel.value=id;onSelectProject(id);
+}
+
+async function onSelectProject(id){
+  const token = ++projectLoadToken;
+  selectedProjectId = String(id || '');
+  const p = projectsCache.find(x => String(x.id) === selectedProjectId);
+  if(!p) return;
+  document.getElementById('projectMeta').innerHTML = `
+    <span>In-charge: <b>${esc(p.incharge||'—')}</b></span>
+    <span>Foreman: <b>${esc(p.foreman||'—')}</b></span>
+    <span>ATD: <b>${esc(p.atd||'—')}</b></span>
+    <span>ETD: <b>${esc(p.etdExp||'—')}</b></span>
+    <span>Est. manhours: <b>${esc(p.estMH||'—')}</b></span>`;
+  const msgEl = document.getElementById('managerMessageBanner');
+  if(msgEl) msgEl.innerHTML = p.managerMessage ? `<div class="manager-message"><span class="icon">📌</span><span><b>Manager's message:</b> ${esc(p.managerMessage)}</span></div>` : '';
+  const body=document.getElementById('taskBody');
+  if(body) body.innerHTML='<tr class="empty-row"><td colspan="15">Loading jobs for '+esc(p.name)+'…</td></tr>';
+  await loadTasks(false, token);
+  if(token !== projectLoadToken || String(selectedProjectId)!==String(id)) return;
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => { if(currentTab==='project' && editingTaskId===null) loadTasks(true, projectLoadToken); }, 10000);
+  renderSummary();
+  renderIndex();
+  renderDashboard();
+}
+
+async function loadTasks(silent, tokenOverride){
+  if(!selectedProjectId) return;
+  const token = tokenOverride ?? projectLoadToken;
+  if(silent && editingTaskId !== null) return;
+  const note = document.getElementById('taskRefreshNote');
+  if(!silent && note) note.textContent = 'Loading…';
+  const projectIdAtStart = String(selectedProjectId);
+  const loaded = await fetchTasksForProject(projectIdAtStart);
+  // Do not let a slower request for the previous project overwrite the current project.
+  if(token !== projectLoadToken || String(selectedProjectId)!==projectIdAtStart) return;
+  tasksCache = loaded;
+  const p = projectsCache.find(x => String(x.id) === projectIdAtStart);
+  if(p){
+    p._tasks = tasksCache;
+    p._progress = computeProgress(tasksCache);
+    p._status = computeStatus(p._progress, p.etdExp);
+  }
+  renderTaskTable();
+  if(note) note.textContent = 'Updated ' + new Date().toLocaleTimeString();
+  renderSummary();
+  renderIndex();
+  renderDashboard();
+}
+
+function getSelectedValues(id){return Array.from(document.getElementById(id)?.selectedOptions||[]).map(o=>o.value).filter(Boolean);}
+function taskMatchesFilter(t){const q=(document.getElementById('taskSearch')?.value||'').trim().toLowerCase(),statuses=getSelectedValues('taskStatusFilter'),locations=getSelectedValues('taskLocationFilter'),st=computeStatus(Number(t.totalProgress)||0,t.end,t.cancelled);const loc=t.location||'';if(statuses.length&&!statuses.includes(st))return false;if(locations.length&&!locations.includes(loc))return false;if(q&&!([t.location,t.locationOther,t.owner,t.job,t.start,t.end,t.unit,t.qty,t.removal,t.fab,t.install,t.mhCal,t.mhJob,t.remarks].join(' ').toLowerCase().includes(q)))return false;return true;}
+function clearTaskFilters(){const a=document.getElementById('taskSearch');if(a)a.value='';['taskStatusFilter','taskLocationFilter'].forEach(id=>Array.from(document.getElementById(id)?.options||[]).forEach(o=>o.selected=false));renderTaskTable();}
+function renderTaskTable(){const body=document.getElementById('taskBody'),visible=tasksCache.filter(taskMatchesFilter);body.innerHTML=visible.length?visible.map(renderTaskRow).join(''):'<tr class="empty-row"><td colspan="15">No job entries match the current filters.</td></tr>';}
+function renderTaskRow(t){
+  const qty=Number(t.qty)||0,status=computeStatus(Number(t.totalProgress)||0,t.end,t.cancelled,t.status),editable=canEditTask(t);
+  if(t.id===editingTaskId){return `<tr><td><select class="inline-edit" id="editLocation-${t.id}"><option>Engine Room</option><option>Main Deck</option><option>Pump Room</option><option>Tank</option><option>Other</option></select><input class="inline-edit" id="editLocationOther-${t.id}" value="${esc(t.locationOther||'')}" placeholder="Other location"></td><td><input class="inline-edit" id="editOwner-${t.id}" value="${esc(t.owner||'')}"></td><td><input class="inline-edit job" id="editJob-${t.id}" value="${esc(t.job||'')}"></td><td><input class="inline-edit" type="date" id="editStart-${t.id}" value="${esc(t.start||'')}"></td><td><input class="inline-edit" type="date" id="editEnd-${t.id}" value="${esc(t.end||'')}"></td><td><input class="inline-edit" type="number" min="0" id="editQty-${t.id}" value="${qty}"></td><td><input class="inline-edit" type="number" min="0" id="editRemoval-${t.id}" value="${Number(t.removal)||0}"></td><td><input class="inline-edit" type="number" min="0" id="editFab-${t.id}" value="${Number(t.fab)||0}"></td><td><input class="inline-edit" type="number" min="0" id="editInstall-${t.id}" value="${Number(t.install)||0}"></td><td>${bar(Number(t.totalProgress)||0)}</td><td>${chip(status,statusLabel(status))}</td><td><input class="inline-edit" type="number" min="0" id="editMhCal-${t.id}" value="${esc(t.mhCal||'')}"></td><td><input class="inline-edit" type="number" min="0" id="editMhJob-${t.id}" value="${esc(t.mhJob||'')}"></td><td><input class="inline-edit remarks" id="editRemarks-${t.id}" value="${esc(t.remarks||'')}"></td><td class="row-actions"><button class="link-btn" onclick="saveEditTask('${t.id}')">Save</button> · <button class="link-btn" onclick="cancelEditTask()">Discard</button></td></tr>`;}
+  const rowClass=t.cancelled?' class="row-cancelled"':'';const actions=t.cancelled?(editable?`<button class="link-btn" onclick="reinstateJob('${t.id}')">Reinstate</button>`:''):(editable?`<button class="link-btn" onclick="startEditTask('${t.id}')">Edit</button> · <button class="link-btn" style="color:var(--red)" onclick="cancelJob('${t.id}')">Cancel</button>`:'');
+  return `<tr${rowClass}><td>${esc(t.location==='Other'?(t.locationOther||'Other'):t.location)}</td><td>${esc(t.owner)}</td><td class="job-desc">${esc(t.job)}</td><td>${esc(t.start)}</td><td>${esc(t.end)}</td><td class="stage-val">${qty}</td><td class="stage-val">${Number(t.removal)||0}<span class="stage-of">/${qty}</span></td><td class="stage-val">${Number(t.fab)||0}<span class="stage-of">/${qty}</span></td><td class="stage-val">${Number(t.install)||0}<span class="stage-of">/${qty}</span></td><td>${bar(Number(t.totalProgress)||0)}</td><td>${chip(status,statusLabel(status))}</td><td>${esc(t.mhCal)}</td><td>${esc(t.mhJob)}</td><td>${esc(t.remarks)}</td><td class="row-actions">${actions}</td></tr>`;
+}
+
+function startEditTask(id){
+  const t=tasksCache.find(x=>x.id===id);if(!t||!canEditTask(t)){alert('You can only edit jobs in your own project.');return;}
+  editingTaskId = id;
+  document.getElementById('taskRefreshNote').textContent = 'Editing — live refresh paused';
+  renderTaskTable();
+}
+function cancelEditTask(){
+  editingTaskId = null;
+  renderTaskTable();
+  loadTasks(true); // catch up on anything other users saved while this row was open
+}
+
+async function saveEditTask(id){
+  const t=tasksCache.find(x=>x.id===id);if(!t||!canEditTask(t))return;
+  const qty=document.getElementById('editQty-'+id).value,removal=document.getElementById('editRemoval-'+id).value||0,fab=document.getElementById('editFab-'+id).value||0,install=document.getElementById('editInstall-'+id).value||0,job=document.getElementById('editJob-'+id).value.trim(),startDate=document.getElementById('editStart-'+id).value,endDate=document.getElementById('editEnd-'+id).value;
+  const err=validateStageNumbers(qty,removal,fab,install);if(err){alert(err);return;}if(!job){alert('Job description is required.');return;}if(startDate&&endDate&&endDate<startDate){alert("End date can't be before start date.");return;}
+  const key='task:'+selectedProjectId+':'+id,raw=await storeGet(key),latest=raw?JSON.parse(raw):t,loc=document.getElementById('editLocation-'+id).value;
+  if(!latest.sharePointId && t && t.sharePointId) latest.sharePointId = t.sharePointId;
+  const updated={...latest,location:loc,locationOther:document.getElementById('editLocationOther-'+id).value.trim(),owner:document.getElementById('editOwner-'+id).value.trim(),job,start:startDate,end:endDate,qty:Number(qty),removal:Number(removal),fab:Number(fab),install:Number(install),totalProgress:computeTaskProgress(qty,removal,fab,install),status:computeStatus(computeTaskProgress(qty,removal,fab,install),endDate,false,latest.status),mhCal:document.getElementById('editMhCal-'+id).value,mhJob:document.getElementById('editMhJob-'+id).value,remarks:document.getElementById('editRemarks-'+id).value.trim(),updatedBy:currentUserName,updatedAt:Date.now()};
+
+  let sharePointId = latest.sharePointId ?? t.sharePointId ?? '';
+  if(!sharePointId){
+    // Not found locally or in cache yet — try one live pull from SharePoint before giving up.
+    await loadTasks(true);
+    const refreshed = tasksCache.find(x => x.id === id);
+    sharePointId = refreshed?.sharePointId ?? '';
+    if(sharePointId) latest.sharePointId = sharePointId;
+  }
+  if(!sharePointId){
+    alert('This job does not have a SharePoint ID yet. Make sure the "Get Jobs" API URL is set up in Settings, then use Refresh and try again.');
+    return;
+  }
+
+  const btns=document.querySelectorAll('#taskBody button');
+  btns.forEach(b=>b.disabled=true);
+  const updatePayload={
+    SharePointID:String(sharePointId),
+    ProjectID:String(updated.projectId||selectedProjectId||''),
+    JobID:String(updated.id||''),
+    Location:String(updated.location==='Other'?(updated.locationOther||'Other'):updated.location||''),
+    OwnerNo:String(updated.owner||''),
+    JobDescription:String(updated.job||''),
+    Start:updated.start?String(updated.start):"",
+    End:updated.end?String(updated.end):"",
+    Unit:String(updated.unit||''),
+    Qty:String(Number(updated.qty)||0),
+    Removal:String(Number(updated.removal)||0),
+    FabOH:String(Number(updated.fab)||0),
+    Install:String(Number(updated.install)||0),
+    TotalProgress:String(Number(updated.totalProgress)||0),
+    Status:String(statusLabel(updated.status)||'In progress'),
+    MHCal:String(updated.mhCal||''),
+    MHJob:String(updated.mhJob||''),
+    Remarks:String(updated.remarks||''),
+    Action:'UPDATE'
+  };
+
+  try{
+    const resp=await fetch(UPDATE_JOB_API_URL,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(updatePayload)});
+    const text=await resp.text();
+    if(!resp.ok) throw new Error('Update Job returned HTTP '+resp.status+(text?' — '+text.slice(0,300):''));
+
+    const ok=await storeSet(key,JSON.stringify(updated));
+    if(!ok) throw new Error('SharePoint was updated, but the local browser cache could not be saved.');
+    editingTaskId=null;
+    const statusEl=document.getElementById('taskStatus');
+    if(statusEl) statusEl.innerHTML='<div class="status-banner ok">Job updated in SharePoint successfully.</div>';
+    await loadTasks(true);
+    setTimeout(()=>{if(statusEl)statusEl.innerHTML='';},1800);
+  }catch(e){
+    console.error('Update Job API error:',e);
+    alert('Could not update the job in SharePoint.\n\n'+(e.message||String(e)));
+  }finally{
+    btns.forEach(b=>b.disabled=false);
+  }
+}
+
+// A cancelled job is kept on record but is excluded from the Summary tab and
+// from project progress/status rollups.
+async function sendJobUpdateToSharePoint(updated, action){
+  let sharePointId = updated?.sharePointId ?? '';
+  if(!sharePointId){
+    // Not found locally or in cache yet — try one live pull from SharePoint before giving up.
+    await loadTasks(true);
+    const refreshed = tasksCache.find(x => x.id === updated?.id);
+    sharePointId = refreshed?.sharePointId ?? '';
+    if(sharePointId) updated.sharePointId = sharePointId;
+  }
+  if(!sharePointId) throw new Error('This job has no SharePoint ID yet. Make sure the "Get Jobs" API URL is set up in Settings, then use Refresh and try again.');
+  const payload={
+    SharePointID:String(sharePointId), ProjectID:String(updated.projectId||selectedProjectId||''), JobID:String(updated.id||''),
+    Location:String(updated.location==='Other'?(updated.locationOther||'Other'):updated.location||''), OwnerNo:String(updated.owner||''),
+    JobDescription:String(updated.job||''), Start:updated.start?String(updated.start):'', End:updated.end?String(updated.end):'',
+    Unit:String(updated.unit||''), Qty:String(Number(updated.qty)||0), Removal:String(Number(updated.removal)||0), FabOH:String(Number(updated.fab)||0),
+    Install:String(Number(updated.install)||0), TotalProgress:String(Number(updated.totalProgress)||0), Status:String(statusLabel(updated.status)||'In progress'),
+    MHCal:String(updated.mhCal||''), MHJob:String(updated.mhJob||''), Remarks:String(updated.remarks||''), Action:String(action||'UPDATE').toUpperCase()
+  };
+  const resp=await fetch(UPDATE_JOB_API_URL,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
+  const text=await resp.text();
+  if(!resp.ok) throw new Error('Update Job returned HTTP '+resp.status+(text?' — '+text.slice(0,500):''));
+  return text;
+}
+
+async function cancelJob(id){
+  const t = tasksCache.find(x => x.id === id);
+  if(t && !canEditTask(t)){ alert('You can only cancel jobs in your own project.'); return; }
+  if(!t) return;
+  if(!confirm('Mark "' + t.job + '" as cancelled? It will no longer appear on the Summary tab.')) return;
+  const key = 'task:' + selectedProjectId + ':' + id;
+  const raw = await storeGet(key);
+  const latest = raw ? JSON.parse(raw) : t;
+  if(!latest.sharePointId && t && t.sharePointId) latest.sharePointId = t.sharePointId;
+  const updated = { ...latest, cancelled: true, status: 'cancelled', updatedBy:currentUserName, updatedAt:Date.now() };
+  const buttons=document.querySelectorAll('#taskBody button'); buttons.forEach(b=>b.disabled=true);
+  try{
+    await sendJobUpdateToSharePoint(updated,'CANCEL');
+    const ok = await storeSet(key,JSON.stringify(updated));
+    if(!ok) throw new Error('SharePoint was updated, but the local browser cache could not be saved.');
+    const idx = tasksCache.findIndex(x => x.id === id);
+    if(idx >= 0) tasksCache[idx] = updated;
+    editingTaskId = null; renderTaskTable();
+    const statusEl=document.getElementById('taskStatus');
+    if(statusEl) statusEl.innerHTML='<div class="status-banner ok">Job cancelled in SharePoint successfully.</div>';
+    await loadTasks(true);
+    setTimeout(()=>{if(statusEl)statusEl.innerHTML='';},1800);
+  }catch(e){
+    console.error('Cancel Job API error:',e);
+    alert('Could not cancel the job in SharePoint.\n\n'+(e.message||String(e)));
+  }finally{ buttons.forEach(b=>b.disabled=false); }
+}
+
+async function reinstateJob(id){
+  const t = tasksCache.find(x => x.id === id);
+  if(t && !canEditTask(t)){ alert('You can only reinstate jobs in your own project.'); return; }
+  if(!t) return;
+  const key = 'task:' + selectedProjectId + ':' + id;
+  const raw = await storeGet(key);
+  const latest = raw ? JSON.parse(raw) : t;
+  if(!latest.sharePointId && t && t.sharePointId) latest.sharePointId = t.sharePointId;
+  const updated = { ...latest, cancelled: false, status: 'progress', updatedBy:currentUserName, updatedAt:Date.now() };
+  const buttons=document.querySelectorAll('#taskBody button'); buttons.forEach(b=>b.disabled=true);
+  try{
+    await sendJobUpdateToSharePoint(updated,'REINSTATE');
+    const ok=await storeSet(key,JSON.stringify(updated));
+    if(!ok) throw new Error('SharePoint was updated, but the local browser cache could not be saved.');
+    editingTaskId=null; await loadTasks(true);
+  }catch(e){
+    console.error('Reinstate Job API error:',e);
+    alert('Could not reinstate the job in SharePoint.\n\n'+(e.message||String(e)));
+  }finally{ buttons.forEach(b=>b.disabled=false); }
+}
+
+function toggleJobForm(){
+  const wrap=document.getElementById('taskFormWrap');
+  const btn=document.getElementById('toggleJobFormBtn');
+  if(!wrap) return;
+  const hidden=wrap.classList.toggle('hidden');
+  if(btn) btn.textContent=hidden?'＋ Add Jobs':'✕ Close Add Jobs';
+  if(!hidden){
+    document.getElementById('tJob')?.focus();
+    updateProgressPreview();
+  }
+}
+
+function onLocationChange(){
+  document.getElementById('tLocationOtherWrap').classList.toggle('hidden', document.getElementById('tLocation').value !== 'Other');
+}
+
+// Removal / Fabrication-OH / Installation must each be a number >= 0 and <= Qty.
+// Returns an error string, or null if the numbers are valid.
+function validateStageNumbers(qty, removal, fab, install){
+  const nums = {Qty: qty, Removal: removal, 'Fabrication/OH': fab, Installation: install};
+  for(const label in nums){
+    const v = nums[label];
+    if(v === '' || v === null || isNaN(Number(v)) ) return label + ' must be a number.';
+    if(Number(v) < 0) return label + ' cannot be negative.';
+  }
+  const q = Number(qty);
+  if(Number(removal) > q) return 'Removal cannot exceed Qty.';
+  if(Number(fab) > q) return 'Fabrication/OH cannot exceed Qty.';
+  if(Number(install) > q) return 'Installation cannot exceed Qty.';
+  return null;
+}
+
+function updateProgressPreview(){
+  const qty = document.getElementById('tQty').value;
+  const removal = document.getElementById('tRemoval').value;
+  const fab = document.getElementById('tFab').value;
+  const install = document.getElementById('tInstall').value;
+  const el = document.getElementById('tProgressPreview');
+  const err = validateStageNumbers(qty || 0, removal || 0, fab || 0, install || 0);
+  if(qty === ''){
+    el.innerHTML = '<b>0%</b> — set Qty and Removal/Fab/Install';
+    return;
+  }
+  if(err){
+    el.innerHTML = '<span style="color:var(--red)">' + esc(err) + '</span>';
+    return;
+  }
+  const pct = computeTaskProgress(qty, removal, fab, install);
+  el.innerHTML = '<b>' + pct + '%</b> based on Removal/Fab/Install vs Qty';
+}
+
+function generateJobId(){
+  const d=new Date();
+  const y=String(d.getFullYear());
+  const m=String(d.getMonth()+1).padStart(2,'0');
+  const day=String(d.getDate()).padStart(2,'0');
+  const rnd=Math.random().toString(36).slice(2,7).toUpperCase();
+  return `DWP-${y}${m}${day}-${rnd}`;
+}
+
+async function submitTask(){
+  if(!selectedProjectId){ alert('Select a project first.'); return; }
+  const selectedProject=projectsCache.find(p=>String(p.id)===String(selectedProjectId));
+  // Always derive the job's ProjectID from the selected project object. This
+  // prevents SharePoint's numeric item ID (e.g. 3) from being sent to DWP Jobs.
+  const jobProjectId = selectedProject ? String(selectedProject.id) : String(selectedProjectId);
+  if(!canEditProject(selectedProject)){alert('You can only add jobs to your own project.');return;}
+  const job = document.getElementById('tJob').value.trim();
+  const start = document.getElementById('tStart').value;
+  const end = document.getElementById('tEnd').value;
+  const qty = document.getElementById('tQty').value;
+  const removal = document.getElementById('tRemoval').value || 0;
+  const fab = document.getElementById('tFab').value || 0;
+  const install = document.getElementById('tInstall').value || 0;
+  const errEl = document.getElementById('taskErr');
+
+  if(!job){ errEl.textContent = 'Job description is required.'; errEl.classList.add('show'); return; }
+  if(start && end && end < start){ errEl.textContent = "End date can't be before start date."; errEl.classList.add('show'); return; }
+  const stageErr = validateStageNumbers(qty, removal, fab, install);
+  if(stageErr){ errEl.textContent = stageErr; errEl.classList.add('show'); return; }
+  errEl.classList.remove('show');
+
+  const btn = document.getElementById('taskSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const id = generateJobId();
+  const location = document.getElementById('tLocation').value;
+  const task = {
+    id, projectId: jobProjectId, createdAt: Date.now(), createdBy: currentUserName, createdByRole: currentUserRole,
+    location, locationOther: document.getElementById('tLocationOther').value.trim(),
+    owner: document.getElementById('tOwner').value.trim(),
+    job, start, end,
+    unit: document.getElementById('tUnit').value,
+    qty: Number(qty), removal: Number(removal), fab: Number(fab), install: Number(install),
+    totalProgress: computeTaskProgress(qty, removal, fab, install),
+    status: 'progress',
+    cancelled: false,
+    mhCal: document.getElementById('tMhCal').value,
+    mhJob: document.getElementById('tMhJob').value,
+    remarks: document.getElementById('tRemarks').value.trim()
+  };
+
+  let remoteOk = true;
+  const createUrl = getCreateJobApiUrl();
+  if(createUrl){
+    try{
+      const payload = {
+        JobID: String(id), ProjectID: String(jobProjectId), Location: String(location || ''),
+        OwnerNo: String(task.owner || ''), JobDescription: String(task.job || ''), Start: task.start ? String(task.start) : '', End: task.end ? String(task.end) : '',
+        Unit: String(task.unit || ''), Qty: Number(task.qty)||0, Removal: Number(task.removal)||0, FabOH: Number(task.fab)||0, Install: Number(task.install)||0,
+        TotalProgress: Number(task.totalProgress)||0, Status: 'In Progress', MHCal: Number(task.mhCal)||0, MHJob: Number(task.mhJob)||0, Remarks: String(task.remarks || '')
+      };
+      const resp = await fetch(createUrl,{
+  method:'POST',
+  headers:{
+    'Content-Type':'application/json',
+    'Accept':'application/json'
+  },
+  body:JSON.stringify(payload)
+});
+
+if(!resp.ok){
+  throw new Error('Create Job returned HTTP ' + resp.status);
+}
+
+const responseData = await resp.json();
+
+const sharePointId =
+  responseData?.SharePointID ??
+  responseData?.sharePointID ??
+  responseData?.sharepointid ??
+  responseData?.SharePointId ??
+  responseData?.ID ??
+  responseData?.id;
+
+if(!sharePointId || Number.isNaN(Number(sharePointId))){
+  throw new Error('Create Job succeeded, but SharePoint ID was not returned (got: ' + JSON.stringify(sharePointId) + ').');
+}
+
+task.sharePointId = Number(sharePointId);
+      if(!resp.ok){ throw new Error('Create Job returned HTTP ' + resp.status); }
+    }catch(e){ remoteOk=false; console.error('Create Job API error:',e); }
+  } else {
+    remoteOk=false;
+  }
+  const ok = await storeSet('task:' + jobProjectId + ':' + id, JSON.stringify(task));
+  const statusEl = document.getElementById('taskStatus');
+  if(ok){
+    statusEl.innerHTML = remoteOk ? '<div class="status-banner ok">Job entry added to SharePoint.</div>' : '<div class="status-banner err">Job saved locally. Create Job API URL is not connected or the SharePoint save failed.</div>';
+    ['tOwner','tJob','tStart','tEnd','tQty','tMhCal','tMhJob','tRemarks'].forEach(f => document.getElementById(f).value = '');
+    ['tRemoval','tFab','tInstall'].forEach(f => document.getElementById(f).value = 0);
+    document.getElementById('tLocation').value = 'Engine Room';
+    onLocationChange();
+    updateProgressPreview();
+    await loadTasks();
+    setTimeout(() => statusEl.innerHTML = '', 1200);
+  } else {
+    statusEl.innerHTML = '<div class="status-banner err">Could not save this entry — try again.</div>';
+  }
+  btn.disabled = false; btn.textContent = 'Add job entry';
+}
+
+// ---------- Excel export / email ----------
+function exportRowsToExcel(rows,filename,sheetName){if(typeof XLSX==='undefined'){alert('Excel export library could not be loaded.');return;}const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,sheetName||'Data');XLSX.writeFile(wb,filename);}
+function exportProjectsExcel(){const pool=isEngineer()?projectsCache.filter(currentEngineerOwnsProject):projectsCache;const rows=pool.map(p=>({Seq:p.seq||'',Project:p.name||'',Incharge:p.incharge||'',Foreman:p.foreman||'',ATD:p.atd||'',ETD:p.etdExp||'',Days:daysBetween(p.atd,p.etdExp),Progress:(p._progress||0)+'%',Priority:priorityLabel(p._priority),Status:statusLabel(p._status)}));exportRowsToExcel(rows,'Daily_Work_Progress_Index.xlsx','Projects');}
+function exportSummaryExcel(){const pool=isEngineer()?projectsCache.filter(currentEngineerOwnsProject):projectsCache,rows=[];pool.forEach(p=>activeTasks(p._tasks||[]).forEach(t=>{rows.push({Seq:p.seq||'',Project:p.name||'',Incharge:p.incharge||'',Foreman:p.foreman||'',Location:t.location==='Other'?(t.locationOther||'Other'):t.location,Owner:t.owner||'',Job:t.job||'',Start:t.start||'',End:t.end||'',Unit:t.unit||'',Qty:Number(t.qty)||0,Removal:Number(t.removal)||0,'Fabrication/OH':Number(t.fab)||0,Installation:Number(t.install)||0,Progress:(Number(t.totalProgress)||0)+'%',Status:statusLabel(computeStatus(Number(t.totalProgress)||0,t.end,t.cancelled)),'MH cal':t.mhCal||'','MH job':t.mhJob||'',Remarks:t.remarks||''});}));exportRowsToExcel(rows,'Daily_Work_Progress_Summary.xlsx','Summary');}
+function exportProjectExcel(){const p=projectsCache.find(x=>x.id===selectedProjectId);if(!p){alert('Select a project first.');return;}if(isEngineer()&&!currentEngineerOwnsProject(p)){alert('You can only export your own project.');return;}const rows=activeTasks(tasksCache).map(t=>({Seq:p.seq||'',Project:p.name||'',Incharge:p.incharge||'',Foreman:p.foreman||'',Location:t.location==='Other'?(t.locationOther||'Other'):t.location,Owner:t.owner||'',Job:t.job||'',Start:t.start||'',End:t.end||'',Unit:t.unit||'',Qty:Number(t.qty)||0,Removal:Number(t.removal)||0,'Fabrication/OH':Number(t.fab)||0,Installation:Number(t.install)||0,Progress:(Number(t.totalProgress)||0)+'%',Status:statusLabel(computeStatus(Number(t.totalProgress)||0,t.end,t.cancelled)),'MH cal':t.mhCal||'','MH job':t.mhJob||'',Remarks:t.remarks||''}));exportRowsToExcel(rows,'Daily_Work_Progress_'+(p.name||'Project').replace(/[^a-z0-9_-]+/gi,'_')+'.xlsx','Project');}
+function emailProjectData(){const p=projectsCache.find(x=>x.id===selectedProjectId);if(!p){alert('Select a project first.');return;}if(isEngineer()&&!currentEngineerOwnsProject(p)){alert('You can only email your own project.');return;}const lines=activeTasks(tasksCache).map((t,i)=>`${i+1}. ${t.job||''} | ${t.location==='Other'?(t.locationOther||'Other'):t.location} | Qty ${t.qty||0} | Progress ${t.totalProgress||0}% | Status ${statusLabel(computeStatus(Number(t.totalProgress)||0,t.end,t.cancelled))} | Start ${t.start||'-'} | End ${t.end||'-'} | Remarks ${t.remarks||'-'}`);const subject=`Daily Work Progress - ${p.name}`;const body=[`Project: ${p.name}`,`In-charge: ${p.incharge||'-'}`,`Foreman: ${p.foreman||'-'}`,`ATD: ${p.atd||'-'}`,`ETD: ${p.etdExp||'-'}`,`Overall progress: ${p._progress||0}%`,'','Job entries:',...(lines.length?lines:['No active job entries.'])].join('\n');window.location.href='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);}
+
+// ---------- print ----------
+function printSummary(){
+  document.getElementById('printTitle').textContent =
+    'Daily Work Progress — Summary — ' + new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+  window.print();
+}
+function printProject(){
+  const p = projectsCache.find(x => x.id === selectedProjectId);
+  const label = p ? p.name : 'Project sheet';
+  document.getElementById('printTitle').textContent =
+    'Daily Work Progress — ' + label + ' — ' + new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+  window.print();
+}
+
+// ---------- init ----------
+(async function init(){
+  const el=document.getElementById('apiStatus'); if(el){el.textContent='Using built-in URLs'; el.style.color='var(--muted)';}
+  selectLoginRole('management');
+  initSummaryFilterBarState();
+  await loadProjects();
+  document.querySelectorAll('.management-only').forEach(el=>el.classList.add('hidden'));
+})();
+</script>
+
+<!-- V21: Active-project Summary filter + multi-select filters -->
+</body>
+</html>
