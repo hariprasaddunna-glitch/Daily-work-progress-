@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Work Progress — V21</title>
+<title>Daily Work Progress</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
@@ -200,6 +200,23 @@
   .inline-edit{width:100%;min-width:70px;padding:5px 6px;font-size:12px;}
   .inline-edit.job{min-width:150px;}
   .inline-edit.remarks{min-width:130px;}
+
+  /* Excel-Type Multi-Line Job Entry */
+  .excel-entry-container{background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+  .excel-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+  .excel-table-scroll{overflow-x:auto;max-width:100%;border:1px solid var(--line);border-radius:5px;background:#fff;max-height:480px;overflow-y:auto;}
+  .excel-entry-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;}
+  .excel-entry-table th{background:#EBF0F4;color:var(--navy);padding:8px 6px;font-size:11px;font-weight:600;text-align:left;border:1px solid var(--line);position:sticky;top:0;z-index:2;white-space:nowrap;}
+  .excel-entry-table td{padding:2px 3px;border:1px solid var(--line);vertical-align:middle;background:#fff;}
+  .excel-entry-table tr:hover td{background:#F7F9FB;}
+  .excel-entry-table tr.selected td{background:#EEF5FC;}
+  .excel-entry-table tr.has-error td{background:#FFF5F5;}
+  .excel-cell-input{width:100%;padding:5px 6px;font-size:12px;font-family:inherit;color:var(--text);border:1px solid transparent;background:transparent;border-radius:3px;box-sizing:border-box;outline:none;}
+  .excel-cell-input:focus{border-color:var(--navy-2);background:#fff;box-shadow:0 0 0 2px rgba(22,50,76,0.15);}
+  .excel-cell-select{width:100%;padding:4px 5px;font-size:11.5px;font-family:inherit;color:var(--text);border:1px solid var(--line);background:#fff;border-radius:3px;box-sizing:border-box;}
+  .excel-progress-cell{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px;text-align:center;padding:4px;}
+  .excel-delete-btn{background:#FAE7E3;color:var(--red);border:1px solid #F5C6CB;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;}
+  .excel-delete-btn:hover{background:var(--red);color:#fff;border-color:var(--red);}
   .login-overlay{position:fixed;inset:0;background:rgba(15,36,56,.94);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;}
   .login-card{background:#fff;border-radius:10px;width:min(440px,100%);padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.28);}
   .login-card h2{margin:0 0 6px;color:var(--navy);font-size:20px;}
@@ -473,35 +490,66 @@
       <div class="meta-row" id="projectMeta"></div>
       <div id="managerMessageBanner"></div>
 
-      <div style="padding:12px 16px;border-top:1px solid var(--line);">
-        <button class="btn primary" id="toggleJobFormBtn" onclick="toggleJobForm()">＋ Add Jobs</button>
-      </div>
-      <div class="panel-body hidden" id="taskFormWrap">
-        <div id="taskStatus"></div>
-        <div class="form-grid">
-          <div><label>Location *</label>
-            <select id="tLocation" onchange="onLocationChange()">
-              <option>Engine Room</option><option>Main Deck</option><option>Pump Room</option><option>Tank</option><option>Other</option>
-            </select>
-          </div>
-          <div id="tLocationOtherWrap" class="hidden"><label>Specify location</label><input type="text" id="tLocationOther"></div>
-          <div><label>Owner number</label><input type="text" id="tOwner" placeholder="OWN-4521"></div>
-          <div class="span2"><label>Job description *</label><input type="text" id="tJob"></div>
-          <div><label>Start date</label><input type="date" id="tStart"></div>
-          <div><label>End date</label><input type="date" id="tEnd"></div>
-          <div><label>Unit</label><select id="tUnit"><option>pcs</option><option>m</option><option>set</option><option>lot</option></select></div>
-          <div><label>Qty *</label><input type="number" id="tQty" min="0" oninput="updateProgressPreview()"></div>
-          <div><label>Removal</label><input type="number" id="tRemoval" min="0" value="0" oninput="updateProgressPreview()"></div>
-          <div><label>Fabrication / OH</label><input type="number" id="tFab" min="0" value="0" oninput="updateProgressPreview()"></div>
-          <div><label>Installation</label><input type="number" id="tInstall" min="0" value="0" oninput="updateProgressPreview()"></div>
-          <div><label>MH cal.</label><input type="number" id="tMhCal" min="0"></div>
-          <div><label>No of MH by job</label><input type="number" id="tMhJob" min="0"></div>
-          <div class="span2"><label>Remarks</label><input type="text" id="tRemarks"></div>
-          <div><label>Total progress (auto)</label><div class="progress-preview" id="tProgressPreview"><b>0%</b> — set Qty and Removal/Fab/Install</div></div>
+      <div style="padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn primary" id="toggleJobFormBtn" onclick="toggleJobForm()">＋ Add Jobs (Excel Entry)</button>
+          <span style="font-size:12px;color:var(--text-mute);">Spreadsheet grid entry with Add Line &amp; Delete Line</span>
         </div>
-        <div class="field-err" id="taskErr"></div>
-        <div style="margin-top:12px;">
-          <button class="btn primary" id="taskSubmitBtn" onclick="submitTask()">Add job entry</button>
+      </div>
+      <div class="panel-body hidden" id="taskFormWrap" style="background:#FAFBFB;border-bottom:1px solid var(--line);padding:14px 16px;">
+        <div id="taskStatus"></div>
+        <div class="excel-entry-container">
+          <div class="excel-toolbar">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <button class="btn primary" type="button" onclick="addExcelLine()" style="background:var(--navy);"><span style="font-weight:bold;font-size:13px;">＋</span> Add Line</button>
+              <button class="btn secondary" type="button" onclick="deleteSelectedExcelLines()"><span style="color:var(--red)">🗑</span> Delete Selected</button>
+              <button class="btn" type="button" onclick="clearAllExcelLines()">Clear Lines</button>
+              <button class="btn" type="button" onclick="showExcelPasteModal()">📋 Paste from Excel</button>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center;">
+              <span id="excelLineCountNote" style="font-size:12px;color:var(--text-mute);font-weight:600;">1 line</span>
+              <button class="btn" type="button" id="excelSaveBtn" onclick="saveExcelJobs()" style="background:var(--teal);color:#fff;font-weight:600;">💾 Save Jobs to SharePoint</button>
+            </div>
+          </div>
+          <div class="excel-table-scroll" id="excelTableScroll">
+            <table class="excel-entry-table" id="excelEntryTable">
+              <thead>
+                <tr>
+                  <th style="width:34px;text-align:center;"><input type="checkbox" id="excelSelectAll" title="Select all lines" onchange="toggleSelectAllExcelLines(this.checked)"></th>
+                  <th style="width:38px;text-align:center;">#</th>
+                  <th style="width:130px;">Location *</th>
+                  <th style="width:105px;">Owner #</th>
+                  <th style="min-width:240px;">Job Description *</th>
+                  <th style="width:125px;">Start</th>
+                  <th style="width:125px;">End</th>
+                  <th style="width:75px;">Unit</th>
+                  <th style="width:75px;">Qty *</th>
+                  <th style="width:75px;">Removal</th>
+                  <th style="width:75px;">Fab/OH</th>
+                  <th style="width:75px;">Install</th>
+                  <th style="width:90px;text-align:center;">Progress</th>
+                  <th style="width:75px;">MH Cal</th>
+                  <th style="width:75px;">MH Job</th>
+                  <th style="min-width:140px;">Remarks</th>
+                  <th style="width:85px;text-align:center;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="excelEntryBody">
+                <!-- Lines rendered dynamically by renderExcelEntryRows() -->
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:11.5px;color:var(--text-mute);display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+              <span>💡 <b>Keyboard:</b> Press <kbd style="background:#E2E7EC;padding:1px 5px;border-radius:3px;">Tab</kbd> on the Remarks cell to automatically add a new line.</span>
+              <span>📋 <b>Excel Paste:</b> Copy rows in Excel and press <kbd style="background:#E2E7EC;padding:1px 5px;border-radius:3px;">Ctrl+V</kbd> anywhere on the table.</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn" type="button" onclick="addExcelLine()">＋ Add Line</button>
+              <button class="btn primary" type="button" onclick="saveExcelJobs()" style="background:var(--teal);">💾 Save Jobs</button>
+            </div>
+          </div>
+          <div class="field-err" id="excelErr" style="margin-top:8px;"></div>
         </div>
       </div>
 
@@ -1621,20 +1669,284 @@ async function reinstateJob(id){
   }finally{ buttons.forEach(b=>b.disabled=false); }
 }
 
+let excelDraftLines = [];
+
+function initExcelDraftLines(){
+  excelDraftLines = [ createEmptyExcelLine() ];
+}
+
+function createEmptyExcelLine(){
+  return {
+    location: 'Engine Room',
+    locationOther: '',
+    owner: '',
+    job: '',
+    start: '',
+    end: '',
+    unit: 'pcs',
+    qty: 1,
+    removal: 0,
+    fab: 0,
+    install: 0,
+    progress: 0,
+    mhCal: '',
+    mhJob: '',
+    remarks: '',
+    selected: false
+  };
+}
+
+function renderExcelEntryRows(){
+  const body = document.getElementById('excelEntryBody');
+  const countNote = document.getElementById('excelLineCountNote');
+  if(!body) return;
+  if(!excelDraftLines || excelDraftLines.length === 0){
+    initExcelDraftLines();
+  }
+  if(countNote){
+    countNote.textContent = `${excelDraftLines.length} line${excelDraftLines.length === 1 ? '' : 's'}`;
+  }
+
+  body.innerHTML = excelDraftLines.map((line, idx) => {
+    const isOther = line.location === 'Other';
+    const isSelected = line.selected ? ' selected' : '';
+    const hasError = line.hasError ? ' has-error' : '';
+    const pct = Number(line.progress) || 0;
+    const progChip = pct >= 100 ? 'done' : pct > 0 ? 'progress' : 'low';
+    return `
+      <tr class="${isSelected}${hasError}" id="ex_row_${idx}">
+        <td style="text-align:center;">
+          <input type="checkbox" ${line.selected ? 'checked' : ''} onchange="toggleSelectExcelLine(${idx}, this.checked)">
+        </td>
+        <td style="text-align:center;font-weight:600;color:var(--text-mute);font-size:11px;">${idx + 1}</td>
+        <td>
+          <select class="excel-cell-select" onchange="onExcelLineChange(${idx}, 'location', this.value)">
+            <option ${line.location==='Engine Room'?'selected':''}>Engine Room</option>
+            <option ${line.location==='Main Deck'?'selected':''}>Main Deck</option>
+            <option ${line.location==='Pump Room'?'selected':''}>Pump Room</option>
+            <option ${line.location==='Tank'?'selected':''}>Tank</option>
+            <option ${line.location==='Other'?'selected':''}>Other</option>
+          </select>
+          ${isOther ? `<input class="excel-cell-input" style="margin-top:3px;border:1px solid var(--line);background:#fff;" placeholder="Specify location" value="${esc(line.locationOther||'')}" oninput="onExcelLineChange(${idx}, 'locationOther', this.value)">` : ''}
+        </td>
+        <td>
+          <input class="excel-cell-input" placeholder="OWN-4521" value="${esc(line.owner||'')}" oninput="onExcelLineChange(${idx}, 'owner', this.value)">
+        </td>
+        <td>
+          <input class="excel-cell-input" id="ex_job_${idx}" style="font-weight:500;" placeholder="Renew pipe, overhaul valve…" value="${esc(line.job||'')}" oninput="onExcelLineChange(${idx}, 'job', this.value)">
+        </td>
+        <td>
+          <input class="excel-cell-input" type="date" value="${esc(line.start||'')}" onchange="onExcelLineChange(${idx}, 'start', this.value)">
+        </td>
+        <td>
+          <input class="excel-cell-input" type="date" value="${esc(line.end||'')}" onchange="onExcelLineChange(${idx}, 'end', this.value)">
+        </td>
+        <td>
+          <select class="excel-cell-select" onchange="onExcelLineChange(${idx}, 'unit', this.value)">
+            <option ${line.unit==='pcs'?'selected':''}>pcs</option>
+            <option ${line.unit==='m'?'selected':''}>m</option>
+            <option ${line.unit==='set'?'selected':''}>set</option>
+            <option ${line.unit==='lot'?'selected':''}>lot</option>
+          </select>
+        </td>
+        <td>
+          <input class="excel-cell-input" type="number" min="0" value="${line.qty ?? 1}" oninput="onExcelLineChange(${idx}, 'qty', this.value)">
+        </td>
+        <td>
+          <input class="excel-cell-input" type="number" min="0" value="${line.removal ?? 0}" oninput="onExcelLineChange(${idx}, 'removal', this.value)">
+        </td>
+        <td>
+          <input class="excel-cell-input" type="number" min="0" value="${line.fab ?? 0}" oninput="onExcelLineChange(${idx}, 'fab', this.value)">
+        </td>
+        <td>
+          <input class="excel-cell-input" type="number" min="0" value="${line.install ?? 0}" oninput="onExcelLineChange(${idx}, 'install', this.value)">
+        </td>
+        <td class="excel-progress-cell" id="ex_prog_${idx}">
+          <span class="chip ${progChip}">${pct}%</span>
+        </td>
+        <td>
+          <input class="excel-cell-input" type="number" min="0" placeholder="MH" value="${esc(line.mhCal||'')}" oninput="onExcelLineChange(${idx}, 'mhCal', this.value)">
+        </td>
+        <td>
+          <input class="excel-cell-input" type="number" min="0" placeholder="MH" value="${esc(line.mhJob||'')}" oninput="onExcelLineChange(${idx}, 'mhJob', this.value)">
+        </td>
+        <td>
+          <input class="excel-cell-input" id="ex_rem_${idx}" placeholder="Remarks" value="${esc(line.remarks||'')}" oninput="onExcelLineChange(${idx}, 'remarks', this.value)" onkeydown="handleExcelKeyDown(event, ${idx}, 'remarks')">
+        </td>
+        <td style="text-align:center;">
+          <button class="excel-delete-btn" type="button" onclick="deleteExcelLine(${idx})" title="Delete line ${idx+1}">
+            ✕ Delete
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function onExcelLineChange(index, field, value){
+  if(!excelDraftLines[index]) return;
+  excelDraftLines[index][field] = value;
+  excelDraftLines[index].hasError = false;
+  if(field === 'location'){
+    renderExcelEntryRows();
+    return;
+  }
+  if(['qty', 'removal', 'fab', 'install'].includes(field)){
+    const l = excelDraftLines[index];
+    const q = Number(l.qty) || 0;
+    const r = Number(l.removal) || 0;
+    const f = Number(l.fab) || 0;
+    const i = Number(l.install) || 0;
+    const pct = computeTaskProgress(q, r, f, i);
+    l.progress = pct;
+    const progEl = document.getElementById(`ex_prog_${index}`);
+    if(progEl){
+      const progChip = pct >= 100 ? 'done' : pct > 0 ? 'progress' : 'low';
+      progEl.innerHTML = `<span class="chip ${progChip}">${pct}%</span>`;
+    }
+  }
+}
+
+function addExcelLine(){
+  excelDraftLines.push(createEmptyExcelLine());
+  renderExcelEntryRows();
+  const nextIndex = excelDraftLines.length - 1;
+  setTimeout(() => {
+    const jobInput = document.getElementById(`ex_job_${nextIndex}`);
+    if(jobInput) jobInput.focus();
+    const scroll = document.getElementById('excelTableScroll');
+    if(scroll) scroll.scrollTop = scroll.scrollHeight;
+  }, 40);
+}
+
+function deleteExcelLine(index){
+  excelDraftLines.splice(index, 1);
+  if(excelDraftLines.length === 0){
+    initExcelDraftLines();
+  }
+  renderExcelEntryRows();
+}
+
+function deleteSelectedExcelLines(){
+  const remaining = excelDraftLines.filter(l => !l.selected);
+  if(remaining.length === excelDraftLines.length){
+    alert('Please check the box on the line(s) you wish to delete, or click "✕ Delete" on any specific line.');
+    return;
+  }
+  excelDraftLines = remaining.length > 0 ? remaining : [ createEmptyExcelLine() ];
+  const selAll = document.getElementById('excelSelectAll');
+  if(selAll) selAll.checked = false;
+  renderExcelEntryRows();
+}
+
+function clearAllExcelLines(){
+  if(excelDraftLines.some(l => l.job && l.job.trim())){
+    if(!confirm('Clear all draft lines in this entry?')) return;
+  }
+  initExcelDraftLines();
+  renderExcelEntryRows();
+  const errEl = document.getElementById('excelErr');
+  if(errEl){ errEl.textContent = ''; errEl.classList.remove('show'); }
+}
+
+function toggleSelectAllExcelLines(checked){
+  excelDraftLines.forEach(l => l.selected = checked);
+  renderExcelEntryRows();
+}
+
+function toggleSelectExcelLine(index, checked){
+  if(excelDraftLines[index]) excelDraftLines[index].selected = checked;
+  const row = document.getElementById(`ex_row_${index}`);
+  if(row) row.classList.toggle('selected', checked);
+}
+
+function handleExcelKeyDown(event, index, field){
+  if(event.key === 'Tab' && !event.shiftKey && field === 'remarks' && index === excelDraftLines.length - 1){
+    event.preventDefault();
+    addExcelLine();
+  }
+}
+
+function showExcelPasteModal(){
+  const text = prompt("Paste rows from Microsoft Excel or Google Sheets (tab-separated cells):");
+  if(!text) return;
+  const fakeEvent = { clipboardData: { getData: () => text }, preventDefault: () => {} };
+  handleExcelPaste(fakeEvent);
+}
+
+function handleExcelPaste(e){
+  const clip = (e.clipboardData || window.clipboardData)?.getData('text');
+  if(!clip || (!clip.includes('\t') && !clip.includes('\n'))) return;
+  const lines = clip.trim().split(/\r\n|\n|\r/).filter(r => r.trim().length > 0);
+  if(lines.length === 0) return;
+
+  const parsed = lines.map(r => r.split('\t'));
+  if(parsed.length > 0){
+    if(e.preventDefault) e.preventDefault();
+    if(excelDraftLines.length === 1 && !excelDraftLines[0].job.trim()){
+      excelDraftLines = [];
+    }
+    parsed.forEach(cols => {
+      const newLine = createEmptyExcelLine();
+      if(cols.length === 1){
+        newLine.job = cols[0].trim();
+      } else {
+        // Assume Excel format: Location, Owner, Job, Start, End, Unit, Qty, Removal, Fab, Install, MHCal, MHJob, Remarks
+        if(cols[0]) newLine.location = cols[0].trim();
+        if(cols[1]) newLine.owner = cols[1].trim();
+        if(cols[2]) newLine.job = cols[2].trim();
+        if(cols[3]) newLine.start = cols[3].trim();
+        if(cols[4]) newLine.end = cols[4].trim();
+        if(cols[5]) newLine.unit = cols[5].trim();
+        if(cols[6] !== undefined && cols[6] !== '') newLine.qty = Number(cols[6]) || 1;
+        if(cols[7] !== undefined && cols[7] !== '') newLine.removal = Number(cols[7]) || 0;
+        if(cols[8] !== undefined && cols[8] !== '') newLine.fab = Number(cols[8]) || 0;
+        if(cols[9] !== undefined && cols[9] !== '') newLine.install = Number(cols[9]) || 0;
+        if(cols[10]) newLine.mhCal = cols[10].trim();
+        if(cols[11]) newLine.mhJob = cols[11].trim();
+        if(cols[12]) newLine.remarks = cols[12].trim();
+      }
+      newLine.progress = computeTaskProgress(newLine.qty, newLine.removal, newLine.fab, newLine.install);
+      excelDraftLines.push(newLine);
+    });
+
+    renderExcelEntryRows();
+    const statusEl = document.getElementById('taskStatus');
+    if(statusEl){
+      statusEl.innerHTML = `<div class="status-banner ok">Pasted ${parsed.length} row(s) from Excel clipboard into grid.</div>`;
+      setTimeout(() => { if(statusEl) statusEl.innerHTML = ''; }, 3000);
+    }
+  }
+}
+
+// Global paste listener for Excel multi-cell paste when entry panel is open
+window.addEventListener('paste', function(e){
+  const wrap = document.getElementById('taskFormWrap');
+  if(!wrap || wrap.classList.contains('hidden')) return;
+  const text = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+  if(text.includes('\t') || (text.includes('\n') && text.trim().split(/\r\n|\n|\r/).length > 1)){
+    handleExcelPaste(e);
+  }
+});
+
 function toggleJobForm(){
-  const wrap=document.getElementById('taskFormWrap');
-  const btn=document.getElementById('toggleJobFormBtn');
+  const wrap = document.getElementById('taskFormWrap');
+  const btn = document.getElementById('toggleJobFormBtn');
   if(!wrap) return;
-  const hidden=wrap.classList.toggle('hidden');
-  if(btn) btn.textContent=hidden?'＋ Add Jobs':'✕ Close Add Jobs';
+  const hidden = wrap.classList.toggle('hidden');
+  if(btn) btn.textContent = hidden ? '＋ Add Jobs (Excel Entry)' : '✕ Close Excel Entry';
   if(!hidden){
-    document.getElementById('tJob')?.focus();
-    updateProgressPreview();
+    if(!excelDraftLines || excelDraftLines.length === 0){
+      initExcelDraftLines();
+    }
+    renderExcelEntryRows();
+    const firstJob = document.getElementById('ex_job_0');
+    if(firstJob) firstJob.focus();
   }
 }
 
 function onLocationChange(){
-  document.getElementById('tLocationOtherWrap').classList.toggle('hidden', document.getElementById('tLocation').value !== 'Other');
+  // legacy compatibility
 }
 
 // Removal / Fabrication-OH / Installation must each be a number >= 0 and <= Qty.
@@ -1654,22 +1966,7 @@ function validateStageNumbers(qty, removal, fab, install){
 }
 
 function updateProgressPreview(){
-  const qty = document.getElementById('tQty').value;
-  const removal = document.getElementById('tRemoval').value;
-  const fab = document.getElementById('tFab').value;
-  const install = document.getElementById('tInstall').value;
-  const el = document.getElementById('tProgressPreview');
-  const err = validateStageNumbers(qty || 0, removal || 0, fab || 0, install || 0);
-  if(qty === ''){
-    el.innerHTML = '<b>0%</b> — set Qty and Removal/Fab/Install';
-    return;
-  }
-  if(err){
-    el.innerHTML = '<span style="color:var(--red)">' + esc(err) + '</span>';
-    return;
-  }
-  const pct = computeTaskProgress(qty, removal, fab, install);
-  el.innerHTML = '<b>' + pct + '%</b> based on Removal/Fab/Install vs Qty';
+  // legacy compatibility
 }
 
 function generateJobId(){
@@ -1681,106 +1978,175 @@ function generateJobId(){
   return `DWP-${y}${m}${day}-${rnd}`;
 }
 
-async function submitTask(){
+async function saveExcelJobs(){
   if(!selectedProjectId){ alert('Select a project first.'); return; }
-  const selectedProject=projectsCache.find(p=>String(p.id)===String(selectedProjectId));
-  // Always derive the job's ProjectID from the selected project object. This
-  // prevents SharePoint's numeric item ID (e.g. 3) from being sent to DWP Jobs.
+  const selectedProject = projectsCache.find(p => String(p.id) === String(selectedProjectId));
   const jobProjectId = selectedProject ? String(selectedProject.id) : String(selectedProjectId);
-  if(!canEditProject(selectedProject)){alert('You can only add jobs to your own project.');return;}
-  const job = document.getElementById('tJob').value.trim();
-  const start = document.getElementById('tStart').value;
-  const end = document.getElementById('tEnd').value;
-  const qty = document.getElementById('tQty').value;
-  const removal = document.getElementById('tRemoval').value || 0;
-  const fab = document.getElementById('tFab').value || 0;
-  const install = document.getElementById('tInstall').value || 0;
-  const errEl = document.getElementById('taskErr');
+  if(!canEditProject(selectedProject)){
+    alert('You can only add jobs to your own project.');
+    return;
+  }
 
-  if(!job){ errEl.textContent = 'Job description is required.'; errEl.classList.add('show'); return; }
-  if(start && end && end < start){ errEl.textContent = "End date can't be before start date."; errEl.classList.add('show'); return; }
-  const stageErr = validateStageNumbers(qty, removal, fab, install);
-  if(stageErr){ errEl.textContent = stageErr; errEl.classList.add('show'); return; }
-  errEl.classList.remove('show');
+  const errEl = document.getElementById('excelErr');
+  if(errEl){ errEl.textContent = ''; errEl.classList.remove('show'); }
 
-  const btn = document.getElementById('taskSubmitBtn');
-  btn.disabled = true; btn.textContent = 'Saving…';
+  // Check lines that have a job description
+  const filledLines = excelDraftLines.filter(l => l.job && l.job.trim().length > 0);
+  if(filledLines.length === 0){
+    if(errEl){
+      errEl.textContent = 'Please enter at least one Job Description before saving.';
+      errEl.classList.add('show');
+    } else {
+      alert('Please enter at least one Job Description before saving.');
+    }
+    const firstJob = document.getElementById('ex_job_0');
+    if(firstJob) firstJob.focus();
+    return;
+  }
 
-  const id = generateJobId();
-  const location = document.getElementById('tLocation').value;
-  const task = {
-    id, projectId: jobProjectId, createdAt: Date.now(), createdBy: currentUserName, createdByRole: currentUserRole,
-    location, locationOther: document.getElementById('tLocationOther').value.trim(),
-    owner: document.getElementById('tOwner').value.trim(),
-    job, start, end,
-    unit: document.getElementById('tUnit').value,
-    qty: Number(qty), removal: Number(removal), fab: Number(fab), install: Number(install),
-    totalProgress: computeTaskProgress(qty, removal, fab, install),
-    status: 'progress',
-    cancelled: false,
-    mhCal: document.getElementById('tMhCal').value,
-    mhJob: document.getElementById('tMhJob').value,
-    remarks: document.getElementById('tRemarks').value.trim()
-  };
+  // Validate every filled line
+  for(let i = 0; i < excelDraftLines.length; i++){
+    const l = excelDraftLines[i];
+    if(!l.job || !l.job.trim()) continue;
+    if(l.start && l.end && l.end < l.start){
+      l.hasError = true;
+      renderExcelEntryRows();
+      if(errEl){
+        errEl.textContent = `Line ${i + 1} ("${l.job}"): End date cannot be before start date.`;
+        errEl.classList.add('show');
+      }
+      return;
+    }
+    const stageErr = validateStageNumbers(l.qty ?? 1, l.removal ?? 0, l.fab ?? 0, l.install ?? 0);
+    if(stageErr){
+      l.hasError = true;
+      renderExcelEntryRows();
+      if(errEl){
+        errEl.textContent = `Line ${i + 1} ("${l.job}"): ${stageErr}`;
+        errEl.classList.add('show');
+      }
+      return;
+    }
+  }
 
+  const saveBtn = document.getElementById('excelSaveBtn');
+  if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+
+  const statusEl = document.getElementById('taskStatus');
+  let savedCount = 0;
   let remoteOk = true;
   const createUrl = getCreateJobApiUrl();
-  if(createUrl){
-    try{
-      const payload = {
-        JobID: String(id), ProjectID: String(jobProjectId), Location: String(location || ''),
-        OwnerNo: String(task.owner || ''), JobDescription: String(task.job || ''), Start: task.start ? String(task.start) : '', End: task.end ? String(task.end) : '',
-        Unit: String(task.unit || ''), Qty: Number(task.qty)||0, Removal: Number(task.removal)||0, FabOH: Number(task.fab)||0, Install: Number(task.install)||0,
-        TotalProgress: Number(task.totalProgress)||0, Status: 'In Progress', MHCal: Number(task.mhCal)||0, MHJob: Number(task.mhJob)||0, Remarks: String(task.remarks || '')
-      };
-      const resp = await fetch(createUrl,{
-  method:'POST',
-  headers:{
-    'Content-Type':'application/json',
-    'Accept':'application/json'
-  },
-  body:JSON.stringify(payload)
-});
 
-if(!resp.ok){
-  throw new Error('Create Job returned HTTP ' + resp.status);
+  for(let i = 0; i < filledLines.length; i++){
+    const l = filledLines[i];
+    if(statusEl){
+      statusEl.innerHTML = `<div class="status-banner ok">Saving line ${i + 1} of ${filledLines.length}: "${esc(l.job)}" to SharePoint…</div>`;
+    }
+
+    const id = generateJobId();
+    const loc = l.location === 'Other' ? (l.locationOther || 'Other') : (l.location || 'Engine Room');
+    const task = {
+      id,
+      projectId: jobProjectId,
+      createdAt: Date.now(),
+      createdBy: currentUserName,
+      createdByRole: currentUserRole,
+      location: l.location,
+      locationOther: (l.locationOther || '').trim(),
+      owner: (l.owner || '').trim(),
+      job: l.job.trim(),
+      start: l.start || '',
+      end: l.end || '',
+      unit: l.unit || 'pcs',
+      qty: Number(l.qty) || 0,
+      removal: Number(l.removal) || 0,
+      fab: Number(l.fab) || 0,
+      install: Number(l.install) || 0,
+      totalProgress: computeTaskProgress(l.qty, l.removal, l.fab, l.install),
+      status: 'progress',
+      cancelled: false,
+      mhCal: l.mhCal || '',
+      mhJob: l.mhJob || '',
+      remarks: (l.remarks || '').trim()
+    };
+
+    if(createUrl){
+      try{
+        const payload = {
+          JobID: String(id),
+          ProjectID: String(jobProjectId),
+          Location: String(loc),
+          OwnerNo: String(task.owner || ''),
+          JobDescription: String(task.job || ''),
+          Start: task.start ? String(task.start) : '',
+          End: task.end ? String(task.end) : '',
+          Unit: String(task.unit || 'pcs'),
+          Qty: Number(task.qty) || 0,
+          Removal: Number(task.removal) || 0,
+          FabOH: Number(task.fab) || 0,
+          Install: Number(task.install) || 0,
+          TotalProgress: Number(task.totalProgress) || 0,
+          Status: 'In Progress',
+          MHCal: Number(task.mhCal) || 0,
+          MHJob: Number(task.mhJob) || 0,
+          Remarks: String(task.remarks || '')
+        };
+
+        const resp = await fetch(createUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if(!resp.ok){
+          throw new Error('Create Job returned HTTP ' + resp.status);
+        }
+
+        const responseData = await resp.json();
+        const sharePointId =
+          responseData?.SharePointID ??
+          responseData?.sharePointID ??
+          responseData?.sharepointid ??
+          responseData?.SharePointId ??
+          responseData?.ID ??
+          responseData?.id;
+
+        if(sharePointId && !Number.isNaN(Number(sharePointId))){
+          task.sharePointId = Number(sharePointId);
+        }
+      }catch(e){
+        remoteOk = false;
+        console.error('Create Job API error on line ' + (i + 1), e);
+      }
+    } else {
+      remoteOk = false;
+    }
+
+    await storeSet('task:' + jobProjectId + ':' + id, JSON.stringify(task));
+    savedCount++;
+  }
+
+  if(statusEl){
+    statusEl.innerHTML = remoteOk
+      ? `<div class="status-banner ok">Successfully saved ${savedCount} job line(s) to SharePoint.</div>`
+      : `<div class="status-banner err">Saved ${savedCount} job line(s) locally. SharePoint API did not respond or failed.</div>`;
+  }
+
+  // Reset lines to 1 clean line
+  initExcelDraftLines();
+  renderExcelEntryRows();
+  await loadTasks();
+
+  if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = '💾 Save Jobs to SharePoint'; }
+  setTimeout(() => { if(statusEl) statusEl.innerHTML = ''; }, 3500);
 }
 
-const responseData = await resp.json();
-
-const sharePointId =
-  responseData?.SharePointID ??
-  responseData?.sharePointID ??
-  responseData?.sharepointid ??
-  responseData?.SharePointId ??
-  responseData?.ID ??
-  responseData?.id;
-
-if(!sharePointId || Number.isNaN(Number(sharePointId))){
-  throw new Error('Create Job succeeded, but SharePoint ID was not returned (got: ' + JSON.stringify(sharePointId) + ').');
-}
-
-task.sharePointId = Number(sharePointId);
-      if(!resp.ok){ throw new Error('Create Job returned HTTP ' + resp.status); }
-    }catch(e){ remoteOk=false; console.error('Create Job API error:',e); }
-  } else {
-    remoteOk=false;
-  }
-  const ok = await storeSet('task:' + jobProjectId + ':' + id, JSON.stringify(task));
-  const statusEl = document.getElementById('taskStatus');
-  if(ok){
-    statusEl.innerHTML = remoteOk ? '<div class="status-banner ok">Job entry added to SharePoint.</div>' : '<div class="status-banner err">Job saved locally. Create Job API URL is not connected or the SharePoint save failed.</div>';
-    ['tOwner','tJob','tStart','tEnd','tQty','tMhCal','tMhJob','tRemarks'].forEach(f => document.getElementById(f).value = '');
-    ['tRemoval','tFab','tInstall'].forEach(f => document.getElementById(f).value = 0);
-    document.getElementById('tLocation').value = 'Engine Room';
-    onLocationChange();
-    updateProgressPreview();
-    await loadTasks();
-    setTimeout(() => statusEl.innerHTML = '', 1200);
-  } else {
-    statusEl.innerHTML = '<div class="status-banner err">Could not save this entry — try again.</div>';
-  }
-  btn.disabled = false; btn.textContent = 'Add job entry';
+// Backward compatibility alias
+function submitTask(){
+  return saveExcelJobs();
 }
 
 // ---------- Excel export / email ----------
@@ -1814,6 +2180,6 @@ function printProject(){
 })();
 </script>
 
-<!-- V21: Active-project Summary filter + multi-select filters -->
+<!-- Active-project Summary filter + multi-select filters -->
 </body>
 </html>

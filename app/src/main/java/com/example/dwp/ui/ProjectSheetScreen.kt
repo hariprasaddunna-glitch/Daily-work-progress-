@@ -22,6 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.UUID
+import kotlin.math.min
+import kotlin.math.roundToInt
 import com.example.dwp.model.*
 import com.example.dwp.theme.*
 import com.example.dwp.ui.components.*
@@ -203,7 +206,7 @@ fun ProjectSheetScreen(
             }
         }
 
-        // Add Job Button & Collapsible Form
+        // Add Job Button & Excel-Type Multi-Line Entry
         if (canEdit) {
             item {
                 Button(
@@ -220,18 +223,18 @@ fun ProjectSheetScreen(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(if (showAddJobForm) "Close Job Form" else "＋ Add Jobs to ${currentProject.name}")
+                    Text(if (showAddJobForm) "Close Excel Entry" else "＋ Add Jobs (Excel Entry) to ${currentProject.name}")
                 }
             }
 
             if (showAddJobForm) {
                 item {
-                    JobFormCard(
+                    ExcelJobEntryCard(
                         projectId = currentProject.id,
-                        existingJob = null,
+                        currentUser = currentUser,
                         onCancel = { showAddJobForm = false },
-                        onSave = { task ->
-                            onSaveTask(task)
+                        onSaveAll = { tasks ->
+                            tasks.forEach { onSaveTask(it) }
                             showAddJobForm = false
                         }
                     )
@@ -721,6 +724,397 @@ fun JobFormCard(
                     modifier = Modifier.testTag("save_job_button")
                 ) {
                     Text(if (existingJob == null) "Add Job Entry" else "Save Changes")
+                }
+            }
+        }
+    }
+}
+
+data class ExcelDraftLine(
+    val id: String = UUID.randomUUID().toString(),
+    var location: String = "Engine Room",
+    var locationOther: String = "",
+    var owner: String = "",
+    var job: String = "",
+    var start: String = "",
+    var end: String = "",
+    var unit: String = "pcs",
+    var qtyText: String = "1",
+    var removalText: String = "0",
+    var fabText: String = "0",
+    var installText: String = "0",
+    var mhCal: String = "",
+    var mhJob: String = "",
+    var remarks: String = ""
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExcelJobEntryCard(
+    projectId: String,
+    currentUser: CurrentUser,
+    onCancel: () -> Unit,
+    onSaveAll: (List<Task>) -> Unit
+) {
+    val draftLines = remember {
+        mutableStateListOf(ExcelDraftLine())
+    }
+    var formError by remember { mutableStateOf<String?>(null) }
+
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceCard),
+        elevation = CardDefaults.cardElevation(2.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("excel_job_entry_card")
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Excel-Type Job Entry",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NavyPrimary
+                    )
+                    Text(
+                        text = "Spreadsheet multi-line entry (${draftLines.size} line${if (draftLines.size == 1) "" else "s"})",
+                        fontSize = 11.5.sp,
+                        color = TextMuted
+                    )
+                }
+                Button(
+                    onClick = {
+                        draftLines.add(ExcelDraftLine())
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = NavyPrimary),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(5.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Add Line", fontSize = 12.sp)
+                }
+            }
+
+            if (formError != null) {
+                Text(formError!!, color = RedAlert, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
+            }
+
+            // Each Line Card
+            draftLines.forEachIndexed { index, line ->
+                val lineKey = line.id
+                var loc by remember(lineKey) { mutableStateOf(line.location) }
+                var locOther by remember(lineKey) { mutableStateOf(line.locationOther) }
+                var owner by remember(lineKey) { mutableStateOf(line.owner) }
+                var jobDesc by remember(lineKey) { mutableStateOf(line.job) }
+                var startDate by remember(lineKey) { mutableStateOf(line.start) }
+                var endDate by remember(lineKey) { mutableStateOf(line.end) }
+                var unit by remember(lineKey) { mutableStateOf(line.unit) }
+                var qty by remember(lineKey) { mutableStateOf(line.qtyText) }
+                var rem by remember(lineKey) { mutableStateOf(line.removalText) }
+                var fab by remember(lineKey) { mutableStateOf(line.fabText) }
+                var inst by remember(lineKey) { mutableStateOf(line.installText) }
+                var mhCal by remember(lineKey) { mutableStateOf(line.mhCal) }
+                var mhJob by remember(lineKey) { mutableStateOf(line.mhJob) }
+                var remarks by remember(lineKey) { mutableStateOf(line.remarks) }
+
+                // Synchronize back to draftLines
+                LaunchedEffect(loc, locOther, owner, jobDesc, startDate, endDate, unit, qty, rem, fab, inst, mhCal, mhJob, remarks) {
+                    line.location = loc
+                    line.locationOther = locOther
+                    line.owner = owner
+                    line.job = jobDesc
+                    line.start = startDate
+                    line.end = endDate
+                    line.unit = unit
+                    line.qtyText = qty
+                    line.removalText = rem
+                    line.fabText = fab
+                    line.installText = inst
+                    line.mhCal = mhCal
+                    line.mhJob = mhJob
+                    line.remarks = remarks
+                }
+
+                val qNum = qty.toDoubleOrNull() ?: 0.0
+                val rNum = rem.toDoubleOrNull() ?: 0.0
+                val fNum = fab.toDoubleOrNull() ?: 0.0
+                val iNum = inst.toDoubleOrNull() ?: 0.0
+                val progressPct = if (qNum > 0.0) {
+                    val raw = ((rNum / qNum) * 30.0) + ((fNum / qNum) * 30.0) + ((iNum / qNum) * 40.0)
+                    min(100, kotlin.math.round(raw).toInt())
+                } else 0
+
+                Card(
+                    shape = RoundedCornerShape(6.dp),
+                    colors = CardDefaults.cardColors(containerColor = SteelLight.copy(alpha = 0.45f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Line #${index + 1}",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.5.sp,
+                                color = NavyPrimary
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    "Progress: $progressPct%",
+                                    fontSize = 11.5.sp,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (progressPct >= 100) TealSuccess else NavySecondary
+                                )
+                                Button(
+                                    onClick = {
+                                        if (draftLines.size > 1) {
+                                            draftLines.removeAt(index)
+                                        } else {
+                                            draftLines[0] = ExcelDraftLine()
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = RedAlert.copy(alpha = 0.15f),
+                                        contentColor = RedAlert
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Delete Line", modifier = Modifier.size(13.dp))
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text("Delete Line", fontSize = 11.sp)
+                                }
+                            }
+                        }
+
+                        // Fields
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilterDropdown(
+                                label = "Location",
+                                selected = loc,
+                                options = listOf(
+                                    "Engine Room" to "Engine Room",
+                                    "Main Deck" to "Main Deck",
+                                    "Pump Room" to "Pump Room",
+                                    "Tank" to "Tank",
+                                    "Other" to "Other"
+                                ),
+                                onSelected = { loc = it },
+                                modifier = Modifier.weight(1.2f)
+                            )
+                            OutlinedTextField(
+                                value = owner,
+                                onValueChange = { owner = it },
+                                label = { Text("Owner #", fontSize = 10.5.sp) },
+                                placeholder = { Text("OWN-4521", fontSize = 10.5.sp) },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                        }
+
+                        if (loc == "Other") {
+                            OutlinedTextField(
+                                value = locOther,
+                                onValueChange = { locOther = it },
+                                label = { Text("Specify Location", fontSize = 10.5.sp) },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+                        }
+
+                        OutlinedTextField(
+                            value = jobDesc,
+                            onValueChange = { jobDesc = it },
+                            label = { Text("Job Description *", fontSize = 11.sp) },
+                            placeholder = { Text("e.g. Renew 4\" Cargo line elbow", fontSize = 11.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            OutlinedTextField(
+                                value = startDate,
+                                onValueChange = { startDate = it },
+                                label = { Text("Start", fontSize = 10.sp) },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = endDate,
+                                onValueChange = { endDate = it },
+                                label = { Text("End", fontSize = 10.sp) },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                            FilterDropdown(
+                                label = "Unit",
+                                selected = unit,
+                                options = listOf("pcs" to "pcs", "m" to "m", "set" to "set", "lot" to "lot"),
+                                onSelected = { unit = it },
+                                modifier = Modifier.weight(0.9f)
+                            )
+                        }
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            OutlinedTextField(
+                                value = qty,
+                                onValueChange = { qty = it },
+                                label = { Text("Qty", fontSize = 10.sp) },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = rem,
+                                onValueChange = { rem = it },
+                                label = { Text("Removal", fontSize = 10.sp) },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = fab,
+                                onValueChange = { fab = it },
+                                label = { Text("Fab/OH", fontSize = 10.sp) },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = inst,
+                                onValueChange = { inst = it },
+                                label = { Text("Install", fontSize = 10.sp) },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true
+                            )
+                        }
+
+                        OutlinedTextField(
+                            value = remarks,
+                            onValueChange = { remarks = it },
+                            label = { Text("Remarks", fontSize = 10.5.sp) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                }
+            }
+
+            // Bottom action toolbar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(
+                    onClick = { draftLines.add(ExcelDraftLine()) },
+                    colors = ButtonDefaults.buttonColors(containerColor = NavySecondary),
+                    shape = RoundedCornerShape(5.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Add Line", fontSize = 12.sp)
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onCancel) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = {
+                            val filled = draftLines.filter { it.job.isNotBlank() }
+                            if (filled.isEmpty()) {
+                                formError = "Please enter at least one Job Description."
+                                return@Button
+                            }
+                            // Validation
+                            for ((i, l) in filled.withIndex()) {
+                                val q = l.qtyText.toDoubleOrNull() ?: -1.0
+                                val r = l.removalText.toDoubleOrNull() ?: 0.0
+                                val f = l.fabText.toDoubleOrNull() ?: 0.0
+                                val inst = l.installText.toDoubleOrNull() ?: 0.0
+                                if (q < 0) {
+                                    formError = "Line #${i + 1}: Qty must be a non-negative number."
+                                    return@Button
+                                }
+                                if (r > q) {
+                                    formError = "Line #${i + 1}: Removal cannot exceed Qty."
+                                    return@Button
+                                }
+                                if (f > q) {
+                                    formError = "Line #${i + 1}: Fab/OH cannot exceed Qty."
+                                    return@Button
+                                }
+                                if (inst > q) {
+                                    formError = "Line #${i + 1}: Install cannot exceed Qty."
+                                    return@Button
+                                }
+                            }
+
+                            val tasksToSave = filled.map { l ->
+                                val q = l.qtyText.toDoubleOrNull() ?: 1.0
+                                val r = l.removalText.toDoubleOrNull() ?: 0.0
+                                val f = l.fabText.toDoubleOrNull() ?: 0.0
+                                val inst = l.installText.toDoubleOrNull() ?: 0.0
+                                val rawProg = if (q > 0.0) {
+                                    val raw = ((r / q) * 30.0) + ((f / q) * 30.0) + ((inst / q) * 40.0)
+                                    min(100, kotlin.math.round(raw).toInt())
+                                } else 0
+
+                                Task(
+                                    id = "DWP-${System.currentTimeMillis().toString().takeLast(6)}-${UUID.randomUUID().toString().take(4).uppercase()}",
+                                    projectId = projectId,
+                                    location = l.location,
+                                    locationOther = l.locationOther.trim(),
+                                    owner = l.owner.trim(),
+                                    job = l.job.trim(),
+                                    start = l.start.trim(),
+                                    end = l.end.trim(),
+                                    unit = l.unit,
+                                    qty = q,
+                                    removal = r,
+                                    fab = f,
+                                    install = inst,
+                                    totalProgress = rawProg,
+                                    status = if (rawProg >= 100) "done" else "progress",
+                                    mhCal = l.mhCal.trim(),
+                                    mhJob = l.mhJob.trim(),
+                                    remarks = l.remarks.trim(),
+                                    createdAt = System.currentTimeMillis(),
+                                    createdBy = currentUser.displayName,
+                                    createdByRole = currentUser.role.label
+                                )
+                            }
+                            onSaveAll(tasksToSave)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = TealSuccess),
+                        shape = RoundedCornerShape(5.dp)
+                    ) {
+                        Text("Save All Jobs (${draftLines.filter { it.job.isNotBlank() }.size})")
+                    }
                 }
             }
         }
