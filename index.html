@@ -229,12 +229,36 @@
   @media(max-width:800px){.side-nav{width:170px}.side-brand h1{font-size:16px}main{padding:18px 14px 50px}.filter-bar{padding:10px 12px}}
   @media(max-width:620px){.app-shell{display:block}.side-nav{position:static;width:100%;height:auto}.side-nav nav{flex-direction:row;overflow-x:auto}.side-nav nav button{white-space:nowrap;width:auto}.side-bottom{display:none}.topbar{padding:8px 12px}.login-options{grid-template-columns:1fr}}
 
+  /* Project Progress D3 Bar Chart */
+  .project-d3-chart-card{background:#fff;border-top:1px solid var(--line);padding:12px 16px 14px;position:relative;}
+  .project-d3-header{margin-bottom:8px;}
+  .project-d3-title-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+  .project-d3-title{font-size:13px;font-weight:600;color:var(--navy);display:inline-flex;align-items:center;}
+  .project-d3-subtitle{font-size:11px;font-weight:500;color:var(--text-mute);margin-left:8px;background:var(--steel-light);padding:2px 8px;border-radius:10px;}
+  .project-d3-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .d3-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;font-family:'IBM Plex Sans',sans-serif;}
+  .d3-badge.overall{background:var(--navy);color:#fff;font-weight:600;}
+  .d3-badge.tasks{background:var(--steel-light);color:var(--text);}
+  .d3-badge.done{background:var(--teal-bg);color:var(--teal);font-weight:600;}
+  .d3-badge.inprog{background:#EBF3FA;color:#2B6CB0;font-weight:600;}
+  .d3-badge.behind{background:var(--red-bg);color:var(--red);font-weight:600;}
+  .d3-badge.notstarted{background:#F1F3F5;color:#6C757D;}
+  .d3-badge.qty{background:#F7FAFC;color:var(--steel);border:1px solid var(--line);}
+  .project-d3-chart-container{width:100%;min-height:130px;position:relative;}
+  .d3-tooltip{position:absolute;background:rgba(15,36,56,.95);color:#fff;padding:6px 10px;border-radius:4px;font-size:11px;pointer-events:none;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,.22);transition:opacity .15s ease, transform .15s ease;white-space:nowrap;line-height:1.4;}
+
   @media print{
     @page{size:A4 landscape;margin:10mm;}
     .side-nav, .topbar, .panel-head button, .link-btn, #newProjectFormWrap, #taskFormWrap,
-    .metrics, #taskRefreshNote, .row-actions, th.actions-col { display:none !important; }
+    .metrics, #taskRefreshNote, .row-actions, th.actions-col,
+    #addJobBar, .add-job-bar, #toggleJobFormBtn, .excel-entry-container, .excel-toolbar,
+    button.btn, button, .btn { display:none !important; }
     /* Project print: show only the project/job table, not the job filters. */
-    #tabProject .filter-bar { display:none !important; }
+    #tabProject .filter-bar, .filter-bar { display:none !important; }
+    .project-d3-chart-card{border:1px solid #000 !important;background:#fff !important;margin-bottom:8px !important;padding:6px 10px !important;}
+    .d3-badge{border:1px solid #000 !important;background:#fff !important;color:#000 !important;}
+    .project-d3-subtitle{border:1px solid #777 !important;background:#fff !important;color:#000 !important;}
+    .d3-tooltip{display:none !important;}
     body{background:#fff !important;color:#000 !important;font-size:10px;}
     .content-wrap{width:100%;}
 
@@ -270,6 +294,7 @@
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 <body>
 <div id="loginOverlay" class="login-overlay">
@@ -431,9 +456,32 @@
       </div>
       <div class="filter-bar">
         <div class="filter-field"><label>Search</label><input id="indexSearch" type="text" placeholder="Project, in-charge, foreman…" oninput="renderIndex()"></div>
+        <div class="filter-field small">
+          <label>Shortlist</label>
+          <select id="indexShortlistFilter" onchange="renderIndex()">
+            <option value="">All projects</option>
+            <option value="active">⚡ Active only (In progress / Behind)</option>
+            <option value="urgent">⚡ Urgent &amp; Behind</option>
+            <option value="lowest">⚡ Top 5 lowest progress</option>
+            <option value="sailout">⚡ Sailing soon (&le;7 days)</option>
+          </select>
+        </div>
+        <div class="filter-field small">
+          <label>Sort list</label>
+          <select id="indexSortBy" onchange="renderIndex()">
+            <option value="seq">Sequence (Default)</option>
+            <option value="nameAsc">Name (A → Z)</option>
+            <option value="nameDesc">Name (Z → A)</option>
+            <option value="progAsc">Progress (Lowest first)</option>
+            <option value="progDesc">Progress (Highest first)</option>
+            <option value="etd">ETD (Earliest first)</option>
+            <option value="priority">Priority (High first)</option>
+          </select>
+        </div>
         <div class="filter-field small"><label>Status</label><select id="indexStatusFilter" onchange="renderIndex()"><option value="">All status</option><option value="done">Completed</option><option value="progress">In progress</option><option value="behind">Behind</option></select></div>
         <div class="filter-field small"><label>Priority</label><select id="indexPriorityFilter" onchange="renderIndex()"><option value="">All priority</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
         <div class="filter-field small"><label>In-charge</label><select id="indexInchargeFilter" onchange="renderIndex()"><option value="">All in-charge</option></select></div>
+        <button class="btn" id="quickShortlistBtn" onclick="toggleQuickShortlist()" title="Toggle Active Shortlist">⚡ Shortlist</button>
         <button class="btn" onclick="clearIndexFilters()">Clear</button>
       </div>
       <table>
@@ -490,7 +538,23 @@
       <div class="meta-row" id="projectMeta"></div>
       <div id="managerMessageBanner"></div>
 
-      <div style="padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <!-- Overall Project Progress Breakdown Bar Chart (D3.js) -->
+      <div id="projectProgressChartCard" class="project-d3-chart-card">
+        <div class="project-d3-header">
+          <div class="project-d3-title-row">
+            <div class="project-d3-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;color:var(--teal);"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              <span>Project Progress Breakdown</span>
+              <span class="project-d3-subtitle">Combined Tasks</span>
+            </div>
+            <div class="project-d3-badges" id="projectD3Badges"></div>
+          </div>
+        </div>
+        <div id="projectD3ChartContainer" class="project-d3-chart-container"></div>
+        <div id="d3Tooltip" class="d3-tooltip hidden"></div>
+      </div>
+
+      <div id="addJobBar" class="add-job-bar" style="padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
         <div style="display:flex;gap:10px;align-items:center;">
           <button class="btn primary" id="toggleJobFormBtn" onclick="toggleJobForm()">＋ Add Jobs (Excel Entry)</button>
           <span style="font-size:12px;color:var(--text-mute);">Spreadsheet grid entry with Add Line &amp; Delete Line</span>
@@ -933,7 +997,7 @@ function switchTab(tab){
   if(tab === 'dashboard') loadProjects();
   if(tab === 'index') loadProjects();
   if(tab === 'summary'){ loadProjects().then(()=>loadAllVisibleJobsForSummary()); }
-  if(tab === 'project') loadProjectSelector();
+  if(tab === 'project'){ loadProjectSelector().then(()=>{ setTimeout(renderProjectProgressChart, 80); }); }
 }
 
 // ---------- Power Automate / SharePoint API test ----------
@@ -1185,11 +1249,88 @@ function updateIndexInchargeFilter(){
   const names=[...new Set(projectsCache.map(p=>p.incharge).filter(Boolean))].sort();
   sel.innerHTML='<option value="">All in-charge</option>'+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join(''); if(names.includes(cur))sel.value=cur;
 }
-function clearIndexFilters(){['indexSearch','indexStatusFilter','indexPriorityFilter'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const e=document.getElementById('indexInchargeFilter');if(e)e.value='';renderIndex();}
+function clearIndexFilters(){
+  ['indexSearch','indexStatusFilter','indexPriorityFilter','indexShortlistFilter'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.value='';
+  });
+  const sb=document.getElementById('indexSortBy'); if(sb) sb.value='seq';
+  const inf=document.getElementById('indexInchargeFilter'); if(inf) inf.value='';
+  updateQuickShortlistButton();
+  renderIndex();
+}
+
+function toggleQuickShortlist(){
+  const sel = document.getElementById('indexShortlistFilter');
+  if(!sel) return;
+  sel.value = sel.value === 'active' ? '' : 'active';
+  updateQuickShortlistButton();
+  renderIndex();
+}
+
+function updateQuickShortlistButton(){
+  const sel = document.getElementById('indexShortlistFilter');
+  const btn = document.getElementById('quickShortlistBtn');
+  if(!btn || !sel) return;
+  if(sel.value === 'active'){
+    btn.style.background = 'var(--navy)';
+    btn.style.color = '#fff';
+    btn.style.borderColor = 'var(--navy)';
+  } else {
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  }
+}
+
 function renderIndex(){
-  updateIndexInchargeFilter(); const body=document.getElementById('indexBody');
-  const q=(document.getElementById('indexSearch')?.value||'').trim().toLowerCase(), sf=document.getElementById('indexStatusFilter')?.value||'', pf=document.getElementById('indexPriorityFilter')?.value||'', inf=document.getElementById('indexInchargeFilter')?.value||'';
-  const visible=projectsCache.filter(p=>{if(isEngineer()&&!currentEngineerOwnsProject(p))return false;if(sf&&p._status!==sf)return false;if(pf&&p._priority!==pf)return false;if(inf&&p.incharge!==inf)return false;if(q&&!([p.seq,p.name,p.incharge,p.foreman,p.atd,p.etdExp].join(' ').toLowerCase().includes(q)))return false;return true;});
+  updateIndexInchargeFilter();
+  updateQuickShortlistButton();
+  const body=document.getElementById('indexBody');
+  const q=(document.getElementById('indexSearch')?.value||'').trim().toLowerCase(),
+        sf=document.getElementById('indexStatusFilter')?.value||'',
+        pf=document.getElementById('indexPriorityFilter')?.value||'',
+        inf=document.getElementById('indexInchargeFilter')?.value||'',
+        shortlist=document.getElementById('indexShortlistFilter')?.value||'',
+        sortBy=document.getElementById('indexSortBy')?.value||'seq';
+
+  let visible=projectsCache.filter(p=>{
+    if(isEngineer()&&!currentEngineerOwnsProject(p)) return false;
+    if(sf&&p._status!==sf) return false;
+    if(pf&&p._priority!==pf) return false;
+    if(inf&&p.incharge!==inf) return false;
+    if(q&&!([p.seq,p.name,p.incharge,p.foreman,p.atd,p.etdExp].join(' ').toLowerCase().includes(q))) return false;
+
+    // Shortlist criteria
+    if(shortlist === 'active' && p._status === 'done') return false;
+    if(shortlist === 'urgent' && !(p._priority === 'high' || p._status === 'behind')) return false;
+    if(shortlist === 'sailout' && !(p._daysToEtd !== '' && p._daysToEtd >= 0 && p._daysToEtd <= 7 && p._status !== 'done')) return false;
+    return true;
+  });
+
+  // Shortlist top 5 lowest progress
+  if(shortlist === 'lowest'){
+    visible = [...visible].sort((a,b) => (Number(a._progress)||0) - (Number(b._progress)||0)).slice(0, 5);
+  }
+
+  // Sort list logic
+  if(sortBy === 'nameAsc'){
+    visible.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  } else if(sortBy === 'nameDesc'){
+    visible.sort((a,b) => (b.name||'').localeCompare(a.name||''));
+  } else if(sortBy === 'progAsc'){
+    visible.sort((a,b) => (Number(a._progress)||0) - (Number(b._progress)||0));
+  } else if(sortBy === 'progDesc'){
+    visible.sort((a,b) => (Number(b._progress)||0) - (Number(a._progress)||0));
+  } else if(sortBy === 'etd'){
+    visible.sort((a,b) => (a.etdExp||'9999').localeCompare(b.etdExp||'9999'));
+  } else if(sortBy === 'priority'){
+    const prioWeight = { high: 3, medium: 2, low: 1 };
+    visible.sort((a,b) => (prioWeight[b._priority]||0) - (prioWeight[a._priority]||0));
+  } else {
+    // Default seq
+    visible.sort((a,b) => (Number(a.seq)||9999) - (Number(b.seq)||9999));
+  }
+
   body.innerHTML=visible.length?visible.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.incharge)}</td><td>${esc(p.foreman)}</td><td>${esc(p.atd)}</td><td>${esc(p.etdExp)}</td><td>${daysBetween(p.atd,p.etdExp)}</td><td>${bar(p._progress)}</td><td>${chip(p._priority,priorityLabel(p._priority))}</td><td>${chip(p._status,statusLabel(p._status))}</td><td style="white-space:nowrap"><button class="link-btn" onclick='openProject(${JSON.stringify(p.id)})'>Open</button>${isManagement()?` · <button class="link-btn" onclick='editProject(${JSON.stringify(p.id)})'>Edit</button> · <button class="link-btn" style="color:var(--red)" onclick='deleteProject(${JSON.stringify(p.id)},${JSON.stringify(p.name||'')})'>Delete</button>`:''}</td></tr>`).join(''):'<tr class="empty-row"><td colspan="10">No projects match the current filters.</td></tr>';
   const pool=isEngineer()?projectsCache.filter(currentEngineerOwnsProject):projectsCache; const total=pool.length,done=pool.filter(p=>p._status==='done').length,inprog=pool.filter(p=>p._status==='progress').length,behind=pool.filter(p=>p._status==='behind').length;
   document.getElementById('indexMetrics').innerHTML=`<div class="metric"><div class="label">Total projects</div><div class="value">${total}</div></div><div class="metric done"><div class="label">Completed</div><div class="value">${done}</div></div><div class="metric progress"><div class="label">In progress</div><div class="value">${inprog}</div></div><div class="metric behind"><div class="label">Behind</div><div class="value">${behind}</div></div>`;
@@ -1480,6 +1621,7 @@ async function onSelectProject(id){
   renderSummary();
   renderIndex();
   renderDashboard();
+  renderProjectProgressChart();
 }
 
 async function loadTasks(silent, tokenOverride){
@@ -1500,10 +1642,260 @@ async function loadTasks(silent, tokenOverride){
     p._status = computeStatus(p._progress, p.etdExp);
   }
   renderTaskTable();
+  renderProjectProgressChart();
   if(note) note.textContent = 'Updated ' + new Date().toLocaleTimeString();
   renderSummary();
   renderIndex();
   renderDashboard();
+}
+
+function renderProjectProgressChart(){
+  const container = document.getElementById('projectD3ChartContainer');
+  const badgeContainer = document.getElementById('projectD3Badges');
+  if(!container) return;
+
+  const p = projectsCache.find(x => String(x.id) === String(selectedProjectId));
+  if(!p){
+    container.innerHTML = '<div style="color:var(--text-mute);font-size:12px;padding:8px 0;">Select a project to view progress breakdown.</div>';
+    if(badgeContainer) badgeContainer.innerHTML = '';
+    return;
+  }
+
+  const tasks = activeTasks(tasksCache || []);
+  const totalTasks = tasks.length;
+  const totalQty = tasks.reduce((s,t) => s + (Number(t.qty)||0), 0);
+  const totalRemoval = tasks.reduce((s,t) => s + (Number(t.removal)||0), 0);
+  const totalFab = tasks.reduce((s,t) => s + (Number(t.fab)||0), 0);
+  const totalInstall = tasks.reduce((s,t) => s + (Number(t.install)||0), 0);
+
+  const removalPct = totalQty > 0 ? Math.min(100, Math.round((totalRemoval / totalQty) * 100)) : 0;
+  const fabPct = totalQty > 0 ? Math.min(100, Math.round((totalFab / totalQty) * 100)) : 0;
+  const installPct = totalQty > 0 ? Math.min(100, Math.round((totalInstall / totalQty) * 100)) : 0;
+  const overallPct = computeProgress(tasks);
+
+  const doneCount = tasks.filter(t => (Number(t.totalProgress)||0) >= 100).length;
+  const inprogCount = tasks.filter(t => {
+    const prog = Number(t.totalProgress)||0;
+    const st = computeStatus(prog, t.end, t.cancelled, t.status);
+    return prog > 0 && prog < 100 && st !== 'behind';
+  }).length;
+  const behindCount = tasks.filter(t => computeStatus(Number(t.totalProgress)||0, t.end, t.cancelled, t.status) === 'behind').length;
+  const notStartedCount = tasks.filter(t => (Number(t.totalProgress)||0) === 0).length;
+
+  if(badgeContainer){
+    badgeContainer.innerHTML = `
+      <span class="d3-badge overall">Overall: ${overallPct}%</span>
+      <span class="d3-badge tasks">${totalTasks} Task${totalTasks===1?'':'s'}</span>
+      <span class="d3-badge done">${doneCount} Done</span>
+      ${inprogCount ? `<span class="d3-badge inprog">${inprogCount} In progress</span>` : ''}
+      ${behindCount ? `<span class="d3-badge behind">${behindCount} Behind</span>` : ''}
+      ${notStartedCount ? `<span class="d3-badge notstarted">${notStartedCount} Not started</span>` : ''}
+      <span class="d3-badge qty">${totalQty} pcs Total</span>
+    `;
+  }
+
+  if(totalTasks === 0){
+    container.innerHTML = `
+      <div style="background:#FAFBFB;border:1px dashed var(--line);border-radius:6px;padding:14px;text-align:center;color:var(--text-mute);font-size:12px;">
+        No active job entries recorded yet for <b>${esc(p.name)}</b>. Use <b>＋ Add Jobs</b> below to add tasks.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = '';
+
+  const data = [
+    {
+      key: 'overall',
+      label: 'Overall Progress',
+      value: overallPct,
+      sublabel: `Avg of ${totalTasks} jobs`,
+      detail: `Combined average completion across ${totalTasks} jobs (${doneCount} complete, ${behindCount} behind)`,
+      color: overallPct >= 80 ? '#146B5C' : overallPct <= 25 ? '#A23B2E' : '#0F2438'
+    },
+    {
+      key: 'removal',
+      label: '1. Removal Stage',
+      value: removalPct,
+      sublabel: `${totalRemoval} / ${totalQty} units`,
+      detail: `Removal: ${totalRemoval} of ${totalQty} total units (${removalPct}%) — Stage weight: 30%`,
+      color: '#1D7A74'
+    },
+    {
+      key: 'fab',
+      label: '2. Fabrication / OH',
+      value: fabPct,
+      sublabel: `${totalFab} / ${totalQty} units`,
+      detail: `Fabrication & Overhaul: ${totalFab} of ${totalQty} total units (${fabPct}%) — Stage weight: 30%`,
+      color: '#2B6CB0'
+    },
+    {
+      key: 'install',
+      label: '3. Installation',
+      value: installPct,
+      sublabel: `${totalInstall} / ${totalQty} units`,
+      detail: `Installation: ${totalInstall} of ${totalQty} total units (${installPct}%) — Stage weight: 40%`,
+      color: '#6B46C1'
+    }
+  ];
+
+  const rect = container.getBoundingClientRect();
+  const width = Math.max(340, rect.width || 620);
+  const height = 135;
+  const margin = { top: 6, right: 110, bottom: 20, left: 132 };
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+
+  if(typeof d3 !== 'undefined'){
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet')
+      .style('width', '100%')
+      .style('height', 'auto')
+      .style('display', 'block');
+
+    const g = svg.append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    const x = d3.scaleLinear().domain([0, 100]).range([0, innerWidth]);
+    const y = d3.scaleBand().domain(data.map(d => d.label)).range([0, innerHeight]).padding(0.28);
+
+    // Light grid lines
+    const ticks = [0, 25, 50, 75, 100];
+    g.append('g').attr('class', 'grid')
+      .selectAll('line')
+      .data(ticks)
+      .enter()
+      .append('line')
+      .attr('x1', d => x(d))
+      .attr('x2', d => x(d))
+      .attr('y1', 0)
+      .attr('y2', innerHeight)
+      .attr('stroke', '#E2E7EC')
+      .attr('stroke-dasharray', '2,2')
+      .attr('stroke-width', 1);
+
+    // Background tracks
+    g.selectAll('.track')
+      .data(data)
+      .enter()
+      .append('rect')
+      .attr('class', 'track')
+      .attr('y', d => y(d.label))
+      .attr('x', 0)
+      .attr('height', y.bandwidth())
+      .attr('width', innerWidth)
+      .attr('rx', 4)
+      .attr('fill', '#EDF1F4');
+
+    // Tooltip handler
+    const tooltip = document.getElementById('d3Tooltip');
+    const showTooltip = (event, d) => {
+      if(!tooltip) return;
+      tooltip.innerHTML = `<b>${d.label}: ${d.value}%</b><br><span style="color:#C9D6E0">${d.sublabel}</span><br><span style="color:#9FB2C2">${d.detail}</span>`;
+      tooltip.classList.remove('hidden');
+      const box = container.getBoundingClientRect();
+      const left = Math.min(box.width - 240, Math.max(10, event.clientX - box.left + 12));
+      const top = Math.max(4, event.clientY - box.top - 48);
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    };
+    const hideTooltip = () => { if(tooltip) tooltip.classList.add('hidden'); };
+
+    // Foreground progress bars
+    g.selectAll('.bar')
+      .data(data)
+      .enter()
+      .append('rect')
+      .attr('class', 'bar')
+      .attr('y', d => y(d.label))
+      .attr('x', 0)
+      .attr('height', y.bandwidth())
+      .attr('width', d => Math.max(d.value > 0 ? 4 : 0, x(d.value)))
+      .attr('rx', 4)
+      .attr('fill', d => d.color)
+      .style('cursor', 'pointer')
+      .on('mouseenter', showTooltip)
+      .on('mousemove', showTooltip)
+      .on('mouseleave', hideTooltip);
+
+    // Category labels on left
+    g.selectAll('.y-label')
+      .data(data)
+      .enter()
+      .append('text')
+      .attr('class', 'y-label')
+      .attr('x', -10)
+      .attr('y', d => y(d.label) + y.bandwidth() / 2)
+      .attr('dy', '0.35em')
+      .attr('text-anchor', 'end')
+      .style('font-family', "'IBM Plex Sans', sans-serif")
+      .style('font-size', '11px')
+      .style('font-weight', d => d.key === 'overall' ? '600' : '500')
+      .style('fill', d => d.key === 'overall' ? 'var(--navy)' : 'var(--text)')
+      .text(d => d.label);
+
+    // Value percentage text
+    g.selectAll('.val-label')
+      .data(data)
+      .enter()
+      .append('text')
+      .attr('class', 'val-label')
+      .attr('x', innerWidth + 8)
+      .attr('y', d => y(d.label) + y.bandwidth() / 2)
+      .attr('dy', '0.35em')
+      .attr('text-anchor', 'start')
+      .style('font-family', "'IBM Plex Mono', monospace")
+      .style('font-size', '11px')
+      .style('font-weight', '600')
+      .style('fill', d => d.color)
+      .text(d => `${d.value}%`);
+
+    // Sublabel (counts) text
+    g.selectAll('.sub-label')
+      .data(data)
+      .enter()
+      .append('text')
+      .attr('class', 'sub-label')
+      .attr('x', innerWidth + 48)
+      .attr('y', d => y(d.label) + y.bandwidth() / 2)
+      .attr('dy', '0.35em')
+      .attr('text-anchor', 'start')
+      .style('font-family', "'IBM Plex Sans', sans-serif")
+      .style('font-size', '10px')
+      .style('fill', 'var(--text-mute)')
+      .text(d => `(${d.sublabel})`);
+
+    // X Axis at bottom
+    const xAxis = d3.axisBottom(x)
+      .tickValues(ticks)
+      .tickFormat(d => d + '%')
+      .tickSize(3);
+
+    const xAxisG = g.append('g')
+      .attr('transform', `translate(0,${innerHeight})`)
+      .call(xAxis);
+
+    xAxisG.select('.domain').attr('stroke', '#CCD4DC');
+    xAxisG.selectAll('line').attr('stroke', '#CCD4DC');
+    xAxisG.selectAll('text')
+      .style('font-family', "'IBM Plex Mono', monospace")
+      .style('font-size', '9.5px')
+      .style('fill', '#718096');
+  } else {
+    // Fallback if D3 is not loaded
+    container.innerHTML = data.map(d => `
+      <div style="display:flex;align-items:center;gap:10px;margin:4px 0;font-size:11px;">
+        <span style="width:130px;text-align:right;font-weight:${d.key==='overall'?'600':'500'}">${esc(d.label)}</span>
+        <span style="flex:1;background:#EDF1F4;border-radius:4px;height:14px;overflow:hidden;position:relative;">
+          <span style="display:block;background:${d.color};width:${d.value}%;height:100%;border-radius:4px;"></span>
+        </span>
+        <span style="width:110px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:${d.color};">${d.value}% <span style="font-weight:normal;color:var(--text-mute);font-size:10px;">(${d.sublabel})</span></span>
+      </div>
+    `).join('');
+  }
 }
 
 function getSelectedValues(id){return Array.from(document.getElementById(id)?.selectedOptions||[]).map(o=>o.value).filter(Boolean);}
@@ -2167,8 +2559,16 @@ function printProject(){
   const label = p ? p.name : 'Project sheet';
   document.getElementById('printTitle').textContent =
     'Daily Work Progress — ' + label + ' — ' + new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+  const taskForm = document.getElementById('taskFormWrap');
+  const wasOpen = taskForm && !taskForm.classList.contains('hidden');
+  if(wasOpen) taskForm.classList.add('hidden');
   window.print();
+  if(wasOpen) taskForm.classList.remove('hidden');
 }
+
+window.addEventListener('resize', () => {
+  if(currentTab === 'project') renderProjectProgressChart();
+});
 
 // ---------- init ----------
 (async function init(){
